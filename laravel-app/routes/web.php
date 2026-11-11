@@ -90,6 +90,25 @@ Route::middleware(['auth'])->group(function () {
             ->name('products.destroy');
     });
 
+    // ============ SUPPLIERS ============
+    Route::middleware('permission:inventory.view')->group(function () {
+        Route::get('suppliers', [\App\Http\Controllers\SupplierController::class, 'index'])
+            ->name('suppliers.index');
+    });
+
+    Route::middleware('permission:inventory.manage')->group(function () {
+        Route::get('suppliers/create', [\App\Http\Controllers\SupplierController::class, 'create'])
+            ->name('suppliers.create');
+        Route::post('suppliers', [\App\Http\Controllers\SupplierController::class, 'store'])
+            ->name('suppliers.store');
+        Route::get('suppliers/{supplier}/edit', [\App\Http\Controllers\SupplierController::class, 'edit'])
+            ->whereNumber('supplier')->name('suppliers.edit');
+        Route::put('suppliers/{supplier}', [\App\Http\Controllers\SupplierController::class, 'update'])
+            ->whereNumber('supplier')->name('suppliers.update');
+        Route::delete('suppliers/{supplier}', [\App\Http\Controllers\SupplierController::class, 'destroy'])
+            ->whereNumber('supplier')->name('suppliers.destroy');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {

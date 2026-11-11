@@ -29,7 +29,7 @@ $menuGroups = [
 [
 'label' => 'Procurement',
 'items' => [
-['route' => 'suppliers.index', 'label' => 'Suppliers', 'icon' => 'truck', 'permission' => 'inventory.manage'],
+['route' => 'suppliers.index', 'label' => 'Suppliers', 'icon' => 'truck', 'permission' => 'inventory.view'],
 ['route' => 'purchasing.index', 'label' => 'Purchasing', 'icon' => 'shopping-bag', 'permission' => 'inventory.manage'],
 ],
 ],
