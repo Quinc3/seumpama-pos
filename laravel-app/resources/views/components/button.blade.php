@@ -3,6 +3,8 @@
 'type' => 'button',
 'size' => 'md',
 'icon' => null,
+'tag' => 'button',
+'href' => null,
 ])
 
 @php
@@ -23,9 +25,14 @@ $sizes = [
 $classes = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ' . $variants[$variant] . ' ' . $sizes[$size];
 @endphp
 
+@if ($tag === 'a')
+<a href="{{ $href }}" {{ $attributes->merge(['class' => $classes]) }}>
+    @if ($icon)<x-icon :name="$icon" :size="$size === 'sm' ? 14 : ($size === 'lg' ? 20 : 16)" />@endif
+    {{ $slot }}
+</a>
+@else
 <button type="{{ $type }}" {{ $attributes->merge(['class' => $classes]) }}>
-    @if ($icon)
-    <x-icon :name="$icon" :size="$size === 'sm' ? 14 : ($size === 'lg' ? 20 : 16)" />
-    @endif
+    @if ($icon)<x-icon :name="$icon" :size="$size === 'sm' ? 14 : ($size === 'lg' ? 20 : 16)" />@endif
     {{ $slot }}
 </button>
+@endif

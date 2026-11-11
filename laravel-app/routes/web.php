@@ -16,6 +16,11 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
+    Route::middleware('permission:inventory.manage')->group(function () {
+        Route::resource('units', \App\Http\Controllers\UnitController::class)
+            ->except(['show']);
+    });
+
     Route::get('/health/ann', function (\App\Services\AnnServiceClient $client) {
         try {
             $data = $client->health();
