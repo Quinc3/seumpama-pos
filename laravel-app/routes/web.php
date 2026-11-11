@@ -128,6 +128,19 @@ Route::middleware(['auth'])->group(function () {
             ->whereNumber('customer')->name('customers.destroy');
     });
 
+    // ============ USERS ============
+    Route::middleware('permission:users.manage')->group(function () {
+        Route::get('users', [\App\Http\Controllers\UserController::class, 'index'])->name('users.index');
+        Route::get('users/create', [\App\Http\Controllers\UserController::class, 'create'])->name('users.create');
+        Route::post('users', [\App\Http\Controllers\UserController::class, 'store'])->name('users.store');
+        Route::get('users/{user}/edit', [\App\Http\Controllers\UserController::class, 'edit'])
+            ->whereNumber('user')->name('users.edit');
+        Route::put('users/{user}', [\App\Http\Controllers\UserController::class, 'update'])
+            ->whereNumber('user')->name('users.update');
+        Route::delete('users/{user}', [\App\Http\Controllers\UserController::class, 'destroy'])
+            ->whereNumber('user')->name('users.destroy');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {
