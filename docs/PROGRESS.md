@@ -12,8 +12,8 @@
 | Location              | Tigaraksa, Kabupaten Tangerang, Banten        |
 | Last Updated          | 2026-11-11                                    |
 | Timezone              | Asia/Jakarta                                  |
-| Overall Status        | PHASE 1 COMPLETE                              |
-| Implementation Status | PHASE 2 READY                                 |
+| Overall Status        | PHASE 2 COMPLETE                              |
+| Implementation Status | PHASE 3 READY                                 |
 
 ---
 
@@ -39,18 +39,20 @@ Detail proyek mengikuti `PROJECT_MASTER.md` dan dokumen spesifikasi terkait.
 
 # 2. Current Project Status
 
-<badge>PHASE 1 COMPLETE — READY FOR PHASE 2</badge>
+<badge>PHASE 2 COMPLETE — READY FOR PHASE 3</badge>
 
-Phase 1 (Application Foundation) selesai per 2026-11-11. Laravel 12.72 app, manual auth, RBAC, application layout, Python FastAPI skeleton, dan Laravel↔Python health check sudah terverifikasi. Implementasi fitur bisnis dimulai Phase 2.
+Phase 0 (Preparation), Phase 1 (Application Foundation), dan Phase 2 (Master Data Management) selesai per 2026-11-11. Seluruh master data CRUD (Unit, Category, Ingredient, Product, Supplier, Customer, User) sudah berfungsi dengan permission control. Phase 3 (Recipe & Inventory) siap dimulai.
 
 Kondisi implementasi:
 
-- ✅ Source code aplikasi (Laravel) sudah diimplementasikan (foundation).
-- ✅ Database migrations dasar sudah diimplementasikan (users, RBAC, sessions, cache, jobs).
-- ✅ Backend modules foundation (auth, RBAC) sudah diimplementasikan.
-- ✅ Frontend modules foundation (layout, components, login) sudah diimplementasikan.
+- ✅ Source code aplikasi (Laravel) sudah diimplementasikan (Phase 1 + Phase 2).
+- ✅ Database migrations sudah diimplementasikan (users, RBAC, units, categories, ingredients, products, suppliers, customers).
+- ✅ Backend modules: auth, RBAC, 7 master data module.
+- ✅ Frontend modules: layout, components (button, input, select, file-input, password-input, alert, badge, card, icon), 7 modul CRUD.
 - ⏳ POS transaction flow belum diimplementasikan (Phase 4).
-- ⏳ Inventory management belum diimplementasikan (Phase 3).
+- ⏳ Recipe/BOM belum diimplementasikan (Phase 3).
+- ⏳ Inventory management (stock movement, opname) belum diimplementasikan (Phase 3).
+- ⏳ Purchasing & goods receipt belum diimplementasikan (Phase 3).
 - ✅ Python ANN Service skeleton sudah diimplementasikan (health check only).
 - ⏳ ANN model belum dilatih atau dievaluasi (Phase 7).
 - ✅ Integrasi Laravel dan Python sudah diverifikasi (health check).
@@ -92,14 +94,15 @@ Keputusan berikut merupakan dasar perencanaan proyek. Detail implementasinya tet
 
 | Component            | Technology                |
 | -------------------- | ------------------------- |
-| Backend              | Laravel                   |
+| Backend              | Laravel 12.72             |
 | Frontend             | Laravel Blade             |
-| Styling              | Tailwind CSS              |
+| Styling              | Tailwind CSS v4           |
 | Frontend Interaction | Alpine.js                 |
-| Database             | MySQL/MariaDB             |
-| Machine Learning     | Python                    |
+| Database             | MariaDB 10.4.32 (strict)  |
+| Machine Learning     | Python 3.12 + FastAPI     |
 | ML Model             | Artificial Neural Network |
 | Communication        | REST API                  |
+| PDF Library          | barryvdh/laravel-dompdf   |
 | Timezone             | Asia/Jakarta              |
 
 ## 4.2 Application Scope
@@ -172,8 +175,8 @@ Total fase: 12 fase, mulai Phase 0 sampai Phase 11.
 | ----- | ------------------------------------ | ----------- |
 | 0     | Project Preparation                  | COMPLETED   |
 | 1     | Application Foundation               | COMPLETED   |
-| 2     | Master Data Management               | IN PROGRESS |
-| 3     | Recipe and Inventory                 | NOT STARTED |
+| 2     | Master Data Management               | COMPLETED   |
+| 3     | Recipe and Inventory                 | IN PROGRESS |
 | 4     | POS                                  | NOT STARTED |
 | 5     | Operational Reports                  | NOT STARTED |
 | 6     | Weather and Dataset Preparation      | NOT STARTED |
@@ -231,7 +234,7 @@ Menyelesaikan persiapan proyek sebelum memulai implementasi aplikasi.
 - [x] Memastikan seluruh dokumen tersimpan pada direktori proyek.
 - [x] Melakukan consistency audit seluruh dokumentasi.
 - [x] Mengidentifikasi dan menyelesaikan keputusan yang masih unresolved.
-- [ ] Memastikan kesiapan business data. _(non-blocking Phase 1, dikerjakan paralel Phase 2)_
+- [ ] Memastikan kesiapan business data. _(non-blocking, dikerjakan paralel Phase 2–3)_
 - [x] Menetapkan baseline implementasi.
 - [x] Menyelesaikan persiapan environment development.
 
@@ -261,15 +264,40 @@ Catatan: Checklist penyusunan dokumen menunjukkan dokumen telah disusun, bukan b
 - Python FastAPI skeleton: `/api/v1/health`, request ID middleware, Bearer auth prep.
 - Laravel↔Python health check: `AnnServiceClient`, `/health/ann` endpoint, failure isolation verified.
 
-### Commits
-
-- `1a30605` — bootstrap Laravel + migrate
-- `feat(phase-1)` commits untuk auth, RBAC, layout, components, Python skeleton, health check
-
 ### Non-blocking Notes
 
 - Register publik disabled (user hanya dibuat oleh Admin/Owner via seed atau UI users.manage di Phase 2).
 - Python Bearer auth helper sudah ada tapi belum diaktifkan di endpoint manapun — akan dipakai di Phase 7 (training/prediction).
+
+---
+
+## Phase 2 — Master Data Management
+
+**Status: COMPLETED (2026-11-11)**
+
+### Deliverables Verified
+
+- **Unit Management (2a)** — CRUD, `weight/volume/count` enum, symbol unique, seed 6 unit default (g, kg, ml, L, pcs, pack).
+- **Category Management (2b)** — CRUD, auto-slug (duplikat → `slug-1`, `slug-2`), sort_order, permission split view/manage.
+- **Ingredient Management (2c)** — CRUD, FK ke Unit (restrict delete), `core/non_core` classification, `is_prediction_target` toggle (auto-disabled untuk non_core), current_stock / minimum_stock / safety_stock / lead_time_days, soft delete, filter + search.
+- **Product Management (2d)** — CRUD, FK ke Category (restrict delete), image upload dengan preview + drag-and-drop, soft delete, filter (search + kategori).
+- **Supplier Management (2e)** — CRUD, contact info, search.
+- **Customer Management (2f)** — CRUD, contact info, search.
+- **User Management UI (2g)** — CRUD, single role assignment, password reset, self-protection (tidak bisa hapus/nonaktifkan sendiri), Owner protection (Owner tidak bisa dihapus).
+
+### Reusable Components Added
+
+- `x-select` — dropdown dengan error state.
+- `x-file-input` — dashed drop zone dengan preview, drag-and-drop, remove option.
+- `x-password-input` — password field dengan eye toggle (independen per field).
+- `x-button` — extended dengan `tag="a"` support untuk link button.
+
+### Non-blocking Notes
+
+- Ingredient `current_stock` di-set saat create saja. Perubahan selanjutnya via Stock Movement (Phase 3) — sesuai `DATABASE_DESIGN.md` §6.2.
+- Product image upload opsional, maks 2MB, JPG/PNG/WebP.
+- Permission `customers.manage` belum ada — customer pakai `reports.view` sementara.
+- Register publik tetap tidak ada. User creation hanya via admin (`users.manage`).
 
 ---
 
@@ -346,7 +374,7 @@ Kelayakan dataset harus diperiksa berdasarkan jumlah observasi, kualitas data, v
 
 Keputusan berikut masih perlu dikonfirmasi berdasarkan kebutuhan aktual dan dokumentasi teknis.
 
-**Resolved 2026-11-11:**
+**Resolved 2026-11-11 (Phase 0):**
 
 - ~~Negative stock policy.~~ → Allowed with warning; movement tetap dicatat.
 - ~~Cancellation dan refund policy.~~ → Refund + stock reversal; admin-only; audit trail.
@@ -356,13 +384,13 @@ Keputusan berikut masih perlu dikonfirmasi berdasarkan kebutuhan aktual dan doku
 - ~~PDF library.~~ → barryvdh/laravel-dompdf.
 - ~~Multi-role user.~~ → Single role (v1); schema many-to-many.
 
-**Still pending (non-blocking Phase 1):**
+**Still pending (non-blocking Phase 3):**
 
 - Final database engine dan version → Phase 11.
-- Final user-role dan permission matrix → Phase 2.
+- Final user-role dan permission matrix → Phase 2 (initial done, refine as needed).
 - Payment details → Phase 4.
-- Final ingredient units dan conversion rules → Phase 2.
-- Final ingredient list dan recipes → Phase 2–3.
+- Final ingredient units dan conversion rules → Phase 3 (saat recipe).
+- Final ingredient list dan recipes → Phase 3.
 - Supplier lead time → Phase 3.
 - Inventory service level → Phase 8.
 - ANN feature selection → Phase 7.
@@ -379,19 +407,21 @@ Keputusan yang belum ditetapkan tidak boleh dianggap final oleh AI coding assist
 
 # 11. Next Actions
 
-Phase 1 selesai. Next: Phase 2 — Master Data Management.
+Phase 2 selesai. Next: Phase 3 — Recipe and Inventory System.
 
-Phase 2 order (dependency-based):
+Phase 3 order (dependency-based):
 
-1. Unit Management (foundation for Ingredient) — IN PROGRESS
-2. Category Management (foundation for Product)
-3. Ingredient Management
-4. Product Management
-5. Supplier Management
-6. Customer Management
-7. User Management UI (role assignment)
+1. **Recipe Management** — link Product ke Ingredient dengan quantity (BOM).
+2. **Recipe Versioning** — `effective_from` / `effective_until` untuk history.
+3. **Inventory Movement** — stock in / stock out / adjustment sebagai foundation.
+4. **Stock Opname** — fisik vs sistem, adjustment trail.
+5. **Purchasing & Goods Receipt** — PO flow → receive → stock in (procurement).
 
-Phase 2 **belum termasuk** Recipe, Inventory, POS — itu Phase 3–4.
+Phase 3 fokus: **integritas data stok** — foundation untuk dataset ANN.
+
+Phase 4 (POS) setelah Phase 3 selesai.
+
+Phase 3 **belum termasuk** POS, Reports, Weather, atau ANN — itu Phase 4+.
 
 ---
 
@@ -412,13 +442,14 @@ Setiap perubahan progress harus memenuhi ketentuan:
 
 # 13. Changelog
 
-| Date       | Changes                                                                                                                                                                                                                   |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-10 | Initial progress document drafted                                                                                                                                                                                         |
-| 2026-11-11 | Synchronized implementation phase tracking with IMPLEMENTATION_PLAN.md and updated documentation inventory                                                                                                                |
-| 2026-11-11 | Phase 0 completed: environment audit verified (Windows 10, PHP 8.2.12, MariaDB 10.4.32 strict, Python 3.12.8, Composer 2.11.2); git repo initialized + pushed (commit 9666905); 7 technical decisions locked              |
-| 2026-11-11 | Phase 1 completed: Laravel 12.72 bootstrap, manual auth, RBAC (13 permissions, 4 roles), application layout, reusable Blade components, Python FastAPI skeleton, Laravel↔Python health check (failure isolation verified) |
+| Date       | Changes                                                                                                                                                                                                                                                         |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-10 | Initial progress document drafted                                                                                                                                                                                                                               |
+| 2026-11-11 | Synchronized implementation phase tracking with IMPLEMENTATION_PLAN.md and updated documentation inventory                                                                                                                                                      |
+| 2026-11-11 | Phase 0 completed: environment audit verified (Windows 10, PHP 8.2.12, MariaDB 10.4.32 strict, Python 3.12.8, Composer 2.11.2); git repo initialized + pushed (commit 9666905); 7 technical decisions locked                                                    |
+| 2026-11-11 | Phase 1 completed: Laravel 12.72 bootstrap, manual auth, RBAC (13 permissions, 4 roles), application layout, reusable Blade components, Python FastAPI skeleton, Laravel↔Python health check (failure isolation verified)                                       |
+| 2026-11-11 | Phase 2 completed: 7 master data modules (Unit, Category, Ingredient, Product, Supplier, Customer, User Management) — all CRUD with validation + permission control; added x-select, x-file-input, x-password-input components; image upload with drag-and-drop |
 
 ---
 
-**Current Overall Status: PHASE 1 COMPLETE — READY FOR PHASE 2**
+**Current Overall Status: PHASE 2 COMPLETE — READY FOR PHASE 3**
