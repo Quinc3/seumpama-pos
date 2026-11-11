@@ -109,6 +109,25 @@ Route::middleware(['auth'])->group(function () {
             ->whereNumber('supplier')->name('suppliers.destroy');
     });
 
+    // ============ CUSTOMERS ============
+    Route::middleware('permission:reports.view')->group(function () {
+        Route::get('customers', [\App\Http\Controllers\CustomerController::class, 'index'])
+            ->name('customers.index');
+    });
+
+    Route::middleware('permission:reports.view')->group(function () {
+        Route::get('customers/create', [\App\Http\Controllers\CustomerController::class, 'create'])
+            ->name('customers.create');
+        Route::post('customers', [\App\Http\Controllers\CustomerController::class, 'store'])
+            ->name('customers.store');
+        Route::get('customers/{customer}/edit', [\App\Http\Controllers\CustomerController::class, 'edit'])
+            ->whereNumber('customer')->name('customers.edit');
+        Route::put('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'update'])
+            ->whereNumber('customer')->name('customers.update');
+        Route::delete('customers/{customer}', [\App\Http\Controllers\CustomerController::class, 'destroy'])
+            ->whereNumber('customer')->name('customers.destroy');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {
