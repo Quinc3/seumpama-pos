@@ -1,0 +1,34 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Laravel
+/vendor/
+/node_modules/
+/public/build/
+/storage/*.key
+/.phpunit.result.cache
+*.log
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# ANN artifacts
+*.h5
+*.keras
+*.pkl
+*.joblib
+ann-artifacts/
+
+# OS
+.DS_Store
+Thumbs.db
