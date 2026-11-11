@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             RbacSeeder::class,
             AdminUserSeeder::class,
             UnitSeeder::class,
+            CategorySeeder::class
         ]);
     }
 }

@@ -21,6 +21,24 @@ Route::middleware(['auth'])->group(function () {
             ->except(['show']);
     });
 
+    Route::middleware('permission:products.view')->group(function () {
+        Route::get('categories', [\App\Http\Controllers\CategoryController::class, 'index'])
+            ->name('categories.index');
+    });
+
+    Route::middleware('permission:products.manage')->group(function () {
+        Route::get('categories/create', [\App\Http\Controllers\CategoryController::class, 'create'])
+            ->name('categories.create');
+        Route::post('categories', [\App\Http\Controllers\CategoryController::class, 'store'])
+            ->name('categories.store');
+        Route::get('categories/{category}/edit', [\App\Http\Controllers\CategoryController::class, 'edit'])
+            ->name('categories.edit');
+        Route::put('categories/{category}', [\App\Http\Controllers\CategoryController::class, 'update'])
+            ->name('categories.update');
+        Route::delete('categories/{category}', [\App\Http\Controllers\CategoryController::class, 'destroy'])
+            ->name('categories.destroy');
+    });
+
     Route::get('/health/ann', function (\App\Services\AnnServiceClient $client) {
         try {
             $data = $client->health();
