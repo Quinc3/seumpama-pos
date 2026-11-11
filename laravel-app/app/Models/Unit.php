@@ -17,8 +17,11 @@ class Unit extends Model
 
     public function isUsed(): bool
     {
-        // Phase 2c: return $this->ingredients()->exists();
-        // Belum ada relasi karena Ingredient belum dibuat.
-        return false;
+        return $this->ingredients()->exists();
+    }
+
+    public function ingredients()
+    {
+        return $this->hasMany(\App\Models\Ingredient::class);
     }
 }

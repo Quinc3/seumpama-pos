@@ -65,10 +65,10 @@
                                 <a href="{{ route('units.edit', $unit) }}"
                                     class="text-sm text-blue-600 hover:text-blue-800 font-medium">Edit</a>
                                 <form method="POST" action="{{ route('units.destroy', $unit) }}"
-                                    onsubmit="return confirm('Hapus unit {{ $unit->name }}? Tindakan ini tidak dapat dibatalkan.');">
+                                    onsubmit="return confirm('Hapus unit ini? Tindakan tidak dapat dibatalkan.');"
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-sm text-red-600 hover:text-red-800 font-medium">
-                                        Hapus
+                                    Hapus
                                     </button>
                                 </form>
                             </div>
