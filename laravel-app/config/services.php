@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'ann' => [
+        'url' => env('ANN_SERVICE_URL', 'http://127.0.0.1:8001'),
+        'token' => env('ANN_SERVICE_TOKEN'),
+        'timeout' => (int) env('ANN_SERVICE_TIMEOUT', 10),
+        'connect_timeout' => (int) env('ANN_SERVICE_CONNECT_TIMEOUT', 3),
+    ],
+
 ];

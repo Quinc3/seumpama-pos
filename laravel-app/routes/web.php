@@ -15,4 +15,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    Route::get('/health/ann', function (\App\Services\AnnServiceClient $client) {
+        try {
+            $data = $client->health();
+            return response()->json(['laravel' => 'ok', 'ann' => $data]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'laravel' => 'ok',
+                'ann' => 'unavailable',
+                'error' => $e->getMessage(),
+            ], 503);
+        }
+    });
 });
