@@ -48,7 +48,11 @@ class Category extends Model
 
     public function isUsed(): bool
     {
-        // Phase 2d: return $this->products()->exists();
-        return false;
+        return $this->products()->exists();
+    }
+
+    public function products()
+    {
+        return $this->hasMany(\App\Models\Product::class);
     }
 }

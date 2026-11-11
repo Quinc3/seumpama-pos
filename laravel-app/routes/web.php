@@ -7,14 +7,14 @@ use App\Http\Controllers\UnitController;
 use App\Services\AnnServiceClient;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect('/login'));
+Route::get('/', fn() => redirect('/login'));
 
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+    Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
 
     // ============ UNITS ============
     Route::middleware('permission:inventory.manage')->group(function () {
@@ -66,6 +66,28 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('ingredients/{ingredient}', [IngredientController::class, 'destroy'])
             ->whereNumber('ingredient')
             ->name('ingredients.destroy');
+    });
+
+    // ============ PRODUCTS ============
+    Route::middleware('permission:products.view')->group(function () {
+        Route::get('products', [\App\Http\Controllers\ProductController::class, 'index'])
+            ->name('products.index');
+    });
+
+    Route::middleware('permission:products.manage')->group(function () {
+        Route::get('products/create', [\App\Http\Controllers\ProductController::class, 'create'])
+            ->name('products.create');
+        Route::post('products', [\App\Http\Controllers\ProductController::class, 'store'])
+            ->name('products.store');
+        Route::get('products/{product}/edit', [\App\Http\Controllers\ProductController::class, 'edit'])
+            ->whereNumber('product')
+            ->name('products.edit');
+        Route::put('products/{product}', [\App\Http\Controllers\ProductController::class, 'update'])
+            ->whereNumber('product')
+            ->name('products.update');
+        Route::delete('products/{product}', [\App\Http\Controllers\ProductController::class, 'destroy'])
+            ->whereNumber('product')
+            ->name('products.destroy');
     });
 
     // ============ HEALTH CHECK ============
