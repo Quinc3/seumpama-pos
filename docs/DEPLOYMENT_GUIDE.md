@@ -726,7 +726,7 @@ Hal berikut belum ditetapkan secara final:
 | Backup destination | TBD |
 | Laravel file storage strategy | TBD |
 | Python artifact storage strategy | TBD |
-| Python API framework | TBD |
+| Python API framework | FastAPI (confirmed 2026-11-11) |
 | Production monitoring provider | TBD |
 | Weather provider | TBD; Open-Meteo is an initial candidate |
 

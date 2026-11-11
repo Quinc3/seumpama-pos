@@ -217,7 +217,7 @@ Field `request_id` digunakan untuk membantu pelacakan request pada log Laravel d
 
 Komunikasi Laravel dengan Python menggunakan internal API authentication.
 
-Mekanisme awal yang direncanakan adalah Bearer Token.
+Mekanisme yang dikunci: Bearer Token statis (via env var ANN_SERVICE_TOKEN).
 
 Contoh:
 

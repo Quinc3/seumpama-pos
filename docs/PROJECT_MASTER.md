@@ -1255,6 +1255,13 @@ Keputusan yang sudah disetujui:
 | UI Direction | Professional, modern, responsive |
 | UI Accent | Blue |
 | Development Approach | Modular, incremental |
+| Auth Laravel-Python | Bearer Token statis |
+| Python API Framework | FastAPI |
+| PDF Library | barryvdh/laravel-dompdf |
+| Multi-Role User | Single role (v1); schema many-to-many |
+| Refund Policy | Refund + stock reversal; admin-only |
+| Split Payment | Not supported v1; schema ready |
+| Negative Stock | Allowed with warning; movement recorded |
 
 ## 24.2 Initial Technical Recommendations
 

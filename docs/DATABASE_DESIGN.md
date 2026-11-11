@@ -1398,13 +1398,13 @@ Sebelum database dinyatakan siap:
 Hal-hal berikut masih membutuhkan verifikasi sebelum implementasi:
 
 1. Versi final MySQL/MariaDB berdasarkan environment.
-2. Apakah satu pengguna dapat memiliki lebih dari satu role.
-3. Apakah sistem mendukung split payment sejak versi pertama.
+2. ~~Apakah satu pengguna dapat memiliki lebih dari satu role.~~ → RESOLVED 2026-11-11: single role per user (v1).
+3. ~~Apakah sistem mendukung split payment sejak versi pertama.~~ → RESOLVED 2026-11-11: tidak di v1; schema siap.
 4. Apakah terdapat pajak atau service charge.
 5. Satuan dasar setiap bahan baku.
 6. Aturan konversi satuan pembelian ke satuan inventaris.
-7. Apakah stok negatif benar-benar dilarang untuk semua jenis movement.
-8. Kebijakan refund dan pembatalan transaksi.
+7. ~~Apakah stok negatif benar-benar dilarang untuk semua jenis movement.~~ → RESOLVED 2026-11-11: allowed dengan warning; movement tetap dicatat.
+8. ~~Kebijakan refund dan pembatalan transaksi.~~ → RESOLVED 2026-11-11: refund + stock reversal, admin-only, audit trail.
 9. Format penyimpanan file model ANN.
 10. Finalisasi struktur fitur dataset berdasarkan `ANN_SPECIFICATION.md`.
 

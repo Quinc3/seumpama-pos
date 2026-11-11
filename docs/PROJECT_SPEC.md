@@ -216,6 +216,8 @@ Metode pembayaran awal:
 
 **BR-POS-006:** Metode QRIS pada tahap awal dapat menggunakan pencatatan pembayaran manual. Integrasi payment gateway merupakan pengembangan terpisah.
 
+**BR-POS-006a:** Satu transaksi satu metode pembayaran pada v1. Split payment tidak didukung di UI; schema order_payments siap untuk future upgrade.
+
 ## 4.6 Transaction Processing
 
 Alur transaksi:
@@ -475,6 +477,8 @@ Sistem harus menyediakan informasi:
 - Stock coverage.
 
 Peringatan stok harus dapat dibedakan berdasarkan tingkat urgensi.
+
+**BR-INV-005:** Transaksi POS tetap dapat diselesaikan meskipun stok negatif. Sistem menampilkan warning dan mencatat movement dengan stock_before/stock_after yang benar. Admin menindaklanjuti via stock opname.
 
 ---
 
