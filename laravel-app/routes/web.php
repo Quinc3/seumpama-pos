@@ -237,6 +237,22 @@ Route::middleware(['auth'])->group(function () {
             ->whereNumber('goodsReceipt')->name('goods-receipts.show');
     });
 
+    // ============ POS ============
+    Route::middleware('permission:pos.access')->group(function () {
+        Route::get('pos', [\App\Http\Controllers\PosController::class, 'index'])
+            ->name('pos.index');
+        Route::post('pos/cart/items', [\App\Http\Controllers\PosController::class, 'addItem'])
+            ->name('pos.cart.items.store');
+        Route::patch('pos/cart/items/{cartItem}', [\App\Http\Controllers\PosController::class, 'updateItem'])
+            ->whereNumber('cartItem')
+            ->name('pos.cart.items.update');
+        Route::delete('pos/cart/items/{cartItem}', [\App\Http\Controllers\PosController::class, 'removeItem'])
+            ->whereNumber('cartItem')
+            ->name('pos.cart.items.destroy');
+        Route::post('pos/cart/clear', [\App\Http\Controllers\PosController::class, 'clear'])
+            ->name('pos.cart.clear');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {
