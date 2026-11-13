@@ -23,7 +23,7 @@ $menuGroups = [
 ['route' => 'ingredients.index', 'label' => 'Ingredients', 'icon' => 'package', 'permission' => 'inventory.view'],
 ['route' => 'stock.overview', 'label' => 'Stock Overview', 'icon' => 'layers', 'permission' => 'inventory.view'],
 ['route' => 'inventory.movements.index', 'label' => 'Stock Movement', 'icon' => 'arrow-right-left', 'permission' => 'inventory.view'],
-['route' => 'stock.opname', 'label' => 'Stock Opname', 'icon' => 'clipboard-check', 'permission' => 'inventory.manage'],
+['route' => 'stock-opnames.index', 'label' => 'Stock Opname', 'icon' => 'clipboard-check', 'permission' => 'inventory.view'],
 ],
 ],
 [

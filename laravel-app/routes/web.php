@@ -183,6 +183,28 @@ Route::middleware(['auth'])->group(function () {
             ->name('inventory.movements.store');
     });
 
+    // ============ STOCK OPNAMES ============
+    Route::middleware('permission:inventory.view')->group(function () {
+        Route::get('stock-opnames', [\App\Http\Controllers\StockOpnameController::class, 'index'])
+            ->name('stock-opnames.index');
+        Route::get('stock-opnames/{stockOpname}', [\App\Http\Controllers\StockOpnameController::class, 'show'])
+            ->whereNumber('stockOpname')
+            ->name('stock-opnames.show');
+    });
+
+    Route::middleware('permission:inventory.manage')->group(function () {
+        Route::get('stock-opnames/create', [\App\Http\Controllers\StockOpnameController::class, 'create'])
+            ->name('stock-opnames.create');
+        Route::post('stock-opnames', [\App\Http\Controllers\StockOpnameController::class, 'store'])
+            ->name('stock-opnames.store');
+        Route::post('stock-opnames/{stockOpname}/approve', [\App\Http\Controllers\StockOpnameController::class, 'approve'])
+            ->whereNumber('stockOpname')
+            ->name('stock-opnames.approve');
+        Route::post('stock-opnames/{stockOpname}/cancel', [\App\Http\Controllers\StockOpnameController::class, 'cancel'])
+            ->whereNumber('stockOpname')
+            ->name('stock-opnames.cancel');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {
