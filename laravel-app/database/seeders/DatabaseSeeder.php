@@ -23,6 +23,8 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             IngredientSeeder::class,
             RecipeSeeder::class,
+            BusinessScheduleSeeder::class,
+            PaymentMethodSeeder::class,
         ]);
     }
 }
