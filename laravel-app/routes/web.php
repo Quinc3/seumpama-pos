@@ -168,6 +168,21 @@ Route::middleware(['auth'])->group(function () {
             ->name('recipes.destroy');
     });
 
+    // ============ INVENTORY MOVEMENTS ============
+    Route::middleware('permission:inventory.view')->group(function () {
+        Route::get('inventory/movements', [\App\Http\Controllers\InventoryMovementController::class, 'index'])
+            ->name('inventory.movements.index');
+    });
+
+    Route::middleware('permission:inventory.manage')->group(function () {
+        Route::get('inventory/movements/stock-in', [\App\Http\Controllers\InventoryMovementController::class, 'createIn'])
+            ->name('inventory.movements.create-in');
+        Route::get('inventory/movements/stock-out', [\App\Http\Controllers\InventoryMovementController::class, 'createOut'])
+            ->name('inventory.movements.create-out');
+        Route::post('inventory/movements', [\App\Http\Controllers\InventoryMovementController::class, 'store'])
+            ->name('inventory.movements.store');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {

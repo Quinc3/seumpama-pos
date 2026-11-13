@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\InventoryMovement;
 
 class Ingredient extends Model
 {
@@ -54,5 +55,10 @@ class Ingredient extends Model
             return 'warning';
         }
         return 'normal';
+    }
+
+    public function movements()
+    {
+        return $this->hasMany(InventoryMovement::class)->latest('id');
     }
 }
