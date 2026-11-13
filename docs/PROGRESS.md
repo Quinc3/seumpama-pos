@@ -12,8 +12,8 @@
 | Location              | Tigaraksa, Kabupaten Tangerang, Banten        |
 | Last Updated          | 2026-11-11                                    |
 | Timezone              | Asia/Jakarta                                  |
-| Overall Status        | PHASE 2 COMPLETE                              |
-| Implementation Status | PHASE 3 READY                                 |
+| Overall Status        | PHASE 3 COMPLETE                              |
+| Implementation Status | PHASE 4 READY                                 |
 
 ---
 
@@ -176,8 +176,8 @@ Total fase: 12 fase, mulai Phase 0 sampai Phase 11.
 | 0     | Project Preparation                  | COMPLETED   |
 | 1     | Application Foundation               | COMPLETED   |
 | 2     | Master Data Management               | COMPLETED   |
-| 3     | Recipe and Inventory                 | IN PROGRESS |
-| 4     | POS                                  | NOT STARTED |
+| 3     | Recipe and Inventory                 | COMPLETED   |
+| 4     | POS                                  | IN PROGRESS |
 | 5     | Operational Reports                  | NOT STARTED |
 | 6     | Weather and Dataset Preparation      | NOT STARTED |
 | 7     | Python ANN Integration               | NOT STARTED |
@@ -301,6 +301,26 @@ Catatan: Checklist penyusunan dokumen menunjukkan dokumen telah disusun, bukan b
 
 ---
 
+## Phase 3 — Recipe and Inventory
+
+**Status: COMPLETED (2026-11-13)**
+
+### Deliverables Verified
+
+- **Recipe Management (3a)** — CRUD resep per produk, dynamic rows ingredient, unit auto-follow, guard 1 aktif per produk. Seeder 11 bahan unik + 6 resep sample.
+- **Recipe Versioning (3b)** — edit membuat versi baru, arsipkan versi lama (`is_active=false`, `effective_until` terisi), version history timeline, guard read-only untuk arsip.
+- **Inventory Movement (3c)** — `StockService` central (atomic + `lockForUpdate`), stock in/out dengan negative warning, movement immutable, riwayat dengan filter (bahan/tipe/tanggal).
+- **Stock Opname (3d)** — draft → approve workflow, auto-create `adjustment_in`/`adjustment_out` movement saat approve, cancel tanpa efek, reference auto (`OPN-YYYYMMDD-XXX`), skip movement jika selisih 0.
+- **Purchasing + Goods Receipt (3e)** — PO lifecycle (`draft → approved → partially_received → received | cancelled`), partial receive dengan outstanding tracking, auto stock-in via StockService dengan reference `goods_receipt`, receive ke-2 untuk sisa, reference auto (`PO-YYYYMMDD-XXX`, `GR-YYYYMMDD-XXX`).
+
+### Non-blocking Notes
+
+- Business session FK di `inventory_movements.business_session_id` belum ada — akan di-constraint di Phase 4 setelah `business_sessions` dibuat.
+- Unit conversion (purchase unit ≠ base unit) **belum diimplementasi** di 3e — qty selalu dalam base unit ingredient. Akan dipertimbangkan jika butuh multi-unit di masa depan.
+- Harga PO per base unit (misal Rp 150/gram). Bisa di-refine di Phase 9 (UI) atau Phase 11 (production refinement).
+
+---
+
 # 7. Business Data Readiness
 
 Data aktual dari Coffee Shop Seumpama Bunga masih perlu dikumpulkan dan diverifikasi.
@@ -407,21 +427,19 @@ Keputusan yang belum ditetapkan tidak boleh dianggap final oleh AI coding assist
 
 # 11. Next Actions
 
-Phase 2 selesai. Next: Phase 3 — Recipe and Inventory System.
+Phase 3 selesai. Next: Phase 4 — Point of Sale (POS).
 
-Phase 3 order (dependency-based):
+Phase 4 order (dependency-based):
 
-1. **Recipe Management** — link Product ke Ingredient dengan quantity (BOM).
-2. **Recipe Versioning** — `effective_from` / `effective_until` untuk history.
-3. **Inventory Movement** — stock in / stock out / adjustment sebagai foundation.
-4. **Stock Opname** — fisik vs sistem, adjustment trail.
-5. **Purchasing & Goods Receipt** — PO flow → receive → stock in (procurement).
+1. **Business Session + Payment Methods (4a)** — foundation untuk operational day & metode pembayaran.
+2. **POS Interface + Cart (4b)** — product catalog, search/filter, cart (add/update/remove, multi-cart).
+3. **Checkout + Payment + Stock Deduction (4c)** — manual payment, atomic stock-out via StockService, order records.
+4. **Receipt + Transaction History (4d)** — struk thermal-ready, PDF receipt, filter transaction.
+5. **Void / Refund (4e)** — cancel before pay (void), refund with reversal + audit trail.
 
-Phase 3 fokus: **integritas data stok** — foundation untuk dataset ANN.
+Phase 4 fokus: **transaksi penjualan** — modul inti operasional coffee shop.
 
-Phase 4 (POS) setelah Phase 3 selesai.
-
-Phase 3 **belum termasuk** POS, Reports, Weather, atau ANN — itu Phase 4+.
+Phase 5 (Reports) setelah Phase 4 selesai.
 
 ---
 
@@ -449,7 +467,8 @@ Setiap perubahan progress harus memenuhi ketentuan:
 | 2026-11-11 | Phase 0 completed: environment audit verified (Windows 10, PHP 8.2.12, MariaDB 10.4.32 strict, Python 3.12.8, Composer 2.11.2); git repo initialized + pushed (commit 9666905); 7 technical decisions locked                                                    |
 | 2026-11-11 | Phase 1 completed: Laravel 12.72 bootstrap, manual auth, RBAC (13 permissions, 4 roles), application layout, reusable Blade components, Python FastAPI skeleton, Laravel↔Python health check (failure isolation verified)                                       |
 | 2026-11-11 | Phase 2 completed: 7 master data modules (Unit, Category, Ingredient, Product, Supplier, Customer, User Management) — all CRUD with validation + permission control; added x-select, x-file-input, x-password-input components; image upload with drag-and-drop |
+| 2026-11-13 | Phase 3 completed: recipe management + versioning, inventory movement (StockService atomic), stock opname draft→approve, purchasing + goods receipt with partial receive and outstanding tracking                                                               |
 
 ---
 
-**Current Overall Status: PHASE 2 COMPLETE — READY FOR PHASE 3**
+**Current Overall Status: PHASE 3 COMPLETE — READY FOR PHASE 4**
