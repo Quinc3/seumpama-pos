@@ -39,11 +39,18 @@ class Product extends Model
 
     public function recipe()
     {
-        return $this->hasOne(Recipe::class)->where('is_active', true);
+        return $this->hasOne(Recipe::class)
+            ->where('is_active', true)
+            ->latest('version');
     }
 
     public function recipes()
     {
         return $this->hasMany(Recipe::class);
+    }
+
+    public function hasActiveRecipe(): bool
+    {
+        return $this->recipe()->exists();
     }
 }

@@ -47,4 +47,21 @@ class Recipe extends Model
     {
         return $query->where('is_active', true);
     }
+
+    public function scopeForProduct($query, int $productId)
+    {
+        return $query->where('product_id', $productId);
+    }
+
+    public function isCurrentlyActive(): bool
+    {
+        return $this->is_active
+            && $this->effective_from->lte(now())
+            && ($this->effective_until === null || $this->effective_until->gte(now()));
+    }
+
+    public static function nextVersion(int $productId): int
+    {
+        return (int) static::where('product_id', $productId)->max('version') + 1;
+    }
 }
