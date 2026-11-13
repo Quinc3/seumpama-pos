@@ -21,7 +21,7 @@ $categoryOptions = $categories->mapWithKeys(fn ($c) => [$c->id => $c->name])->to
                 :options="$categoryOptions" placeholder="— Pilih Kategori —"
                 :value="old('category_id', $p?->category_id ?? '')" />
 
-            <x-input name="selling_price" type="number" step="100" min="0" required
+            <x-input name="selling_price" type="number" step="any" min="0" required
                 label="Harga Jual (Rp)"
                 :value="old('selling_price', $p?->selling_price ?? '')"
                 placeholder="Contoh: 28000" />

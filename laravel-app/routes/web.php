@@ -205,6 +205,38 @@ Route::middleware(['auth'])->group(function () {
             ->name('stock-opnames.cancel');
     });
 
+    // ============ PURCHASE ORDERS ============
+    Route::middleware('permission:inventory.view')->group(function () {
+        Route::get('purchase-orders', [\App\Http\Controllers\PurchaseOrderController::class, 'index'])
+            ->name('purchase-orders.index');
+        Route::get('purchase-orders/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderController::class, 'show'])
+            ->whereNumber('purchaseOrder')->name('purchase-orders.show');
+    });
+
+    Route::middleware('permission:inventory.manage')->group(function () {
+        Route::get('purchase-orders/create', [\App\Http\Controllers\PurchaseOrderController::class, 'create'])
+            ->name('purchase-orders.create');
+        Route::post('purchase-orders', [\App\Http\Controllers\PurchaseOrderController::class, 'store'])
+            ->name('purchase-orders.store');
+        Route::post('purchase-orders/{purchaseOrder}/approve', [\App\Http\Controllers\PurchaseOrderController::class, 'approve'])
+            ->whereNumber('purchaseOrder')->name('purchase-orders.approve');
+        Route::post('purchase-orders/{purchaseOrder}/cancel', [\App\Http\Controllers\PurchaseOrderController::class, 'cancel'])
+            ->whereNumber('purchaseOrder')->name('purchase-orders.cancel');
+    });
+
+    // ============ GOODS RECEIPTS ============
+    Route::middleware('permission:inventory.manage')->group(function () {
+        Route::get('purchase-orders/{purchaseOrder}/receive', [\App\Http\Controllers\GoodsReceiptController::class, 'create'])
+            ->whereNumber('purchaseOrder')->name('goods-receipts.create');
+        Route::post('purchase-orders/{purchaseOrder}/receive', [\App\Http\Controllers\GoodsReceiptController::class, 'store'])
+            ->whereNumber('purchaseOrder')->name('goods-receipts.store');
+    });
+
+    Route::middleware('permission:inventory.view')->group(function () {
+        Route::get('goods-receipts/{goodsReceipt}', [\App\Http\Controllers\GoodsReceiptController::class, 'show'])
+            ->whereNumber('goodsReceipt')->name('goods-receipts.show');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {
