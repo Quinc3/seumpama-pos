@@ -7,6 +7,7 @@ use App\Models\CartItem;
 use App\Models\Product;
 use App\Services\BusinessDateResolver;
 use Illuminate\Http\Request;
+use App\Services\OrderService;
 
 class PosController extends Controller
 {
@@ -36,11 +37,19 @@ class PosController extends Controller
             'category_name' => $p->category?->name,
         ])->values()->toArray();
 
+        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)
+            ->orderBy('id')
+            ->get()
+            ->map(fn($m) => ['id' => $m->id, 'name' => $m->name, 'code' => $m->code])
+            ->values()
+            ->toArray();
+
         return view('pos.index', [
             'session' => $session,
             'cartData' => $cart->toCartArray(),
             'productsPayload' => $productsPayload,
             'categories' => $categories,
+            'paymentMethods' => $paymentMethods,
         ]);
     }
 
@@ -113,6 +122,49 @@ class PosController extends Controller
         $cart = Cart::with('items.product')->findOrFail($cart->id);
 
         return response()->json(['success' => true, 'cart' => $cart->toCartArray()]);
+    }
+
+    public function checkout(Request $request, OrderService $orderService, BusinessDateResolver $resolver)
+    {
+        $session = $resolver->getOrOpenSession();
+        $cart = Cart::where([
+            'user_id' => auth()->id(),
+            'business_session_id' => $session->id,
+            'status' => 'active',
+        ])->first();
+
+        if (! $cart) {
+            return response()->json(['success' => false, 'message' => 'Cart tidak ditemukan.'], 422);
+        }
+
+        $data = $request->validate([
+            'payment_method_id' => ['required', 'exists:payment_methods,id'],
+            'amount_paid' => ['required', 'numeric', 'min:0'],
+            'payment_reference' => ['nullable', 'string', 'max:150'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $order = $orderService->checkout(
+                $cart,
+                (int) $data['payment_method_id'],
+                (float) $data['amount_paid'],
+                $data['payment_reference'] ?? null,
+                $data['notes'] ?? null,
+            );
+
+            return response()->json([
+                'success' => true,
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'redirect_url' => route('orders.show', $order),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
     protected function resolveCart($session): Cart

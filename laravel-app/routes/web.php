@@ -251,6 +251,23 @@ Route::middleware(['auth'])->group(function () {
             ->name('pos.cart.items.destroy');
         Route::post('pos/cart/clear', [\App\Http\Controllers\PosController::class, 'clear'])
             ->name('pos.cart.clear');
+
+        // ============ POS (tambahan checkout) ============
+        Route::middleware('permission:pos.access')->group(function () {
+            // ... route POS yang sudah ada
+
+            Route::post('pos/checkout', [\App\Http\Controllers\PosController::class, 'checkout'])
+                ->name('pos.checkout');
+        });
+
+        // ============ ORDERS ============
+        Route::middleware('permission:pos.access')->group(function () {
+            Route::get('orders', [\App\Http\Controllers\OrderController::class, 'index'])
+                ->name('orders.index');
+            Route::get('orders/{order}', [\App\Http\Controllers\OrderController::class, 'show'])
+                ->whereNumber('order')
+                ->name('orders.show');
+        });
     });
 
     // ============ HEALTH CHECK ============

@@ -10,7 +10,7 @@ $menuGroups = [
 'label' => 'Operations',
 'items' => [
 ['route' => 'pos.index', 'label' => 'Point of Sale', 'icon' => 'shopping-cart', 'permission' => 'pos.access'],
-['route' => 'transactions.index', 'label' => 'Transactions', 'icon' => 'receipt', 'permission' => 'pos.access'],
+['route' => 'orders.index', 'label' => 'Transactions', 'icon' => 'receipt', 'permission' => 'pos.access'],
 ['route' => 'products.index', 'label' => 'Products', 'icon' => 'coffee', 'permission' => 'products.view'],
 ['route' => 'categories.index', 'label' => 'Categories', 'icon' => 'package', 'permission' => 'products.view'],
 ['route' => 'recipes.index', 'label' => 'Recipes / BOM', 'icon' => 'layers', 'permission' => 'products.view'],
