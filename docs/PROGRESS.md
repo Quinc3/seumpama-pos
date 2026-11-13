@@ -12,8 +12,8 @@
 | Location              | Tigaraksa, Kabupaten Tangerang, Banten        |
 | Last Updated          | 2026-11-11                                    |
 | Timezone              | Asia/Jakarta                                  |
-| Overall Status        | PHASE 3 COMPLETE                              |
-| Implementation Status | PHASE 4 READY                                 |
+| Overall Status        | PHASE 4 COMPLETE                              |
+| Implementation Status | PHASE 5 READY                                 |
 
 ---
 
@@ -177,8 +177,8 @@ Total fase: 12 fase, mulai Phase 0 sampai Phase 11.
 | 1     | Application Foundation               | COMPLETED   |
 | 2     | Master Data Management               | COMPLETED   |
 | 3     | Recipe and Inventory                 | COMPLETED   |
-| 4     | POS                                  | IN PROGRESS |
-| 5     | Operational Reports                  | NOT STARTED |
+| 4     | POS                                  | COMPLETED   |
+| 5     | Operational Reports                  | IN PROGRESS |
 | 6     | Weather and Dataset Preparation      | NOT STARTED |
 | 7     | Python ANN Integration               | NOT STARTED |
 | 8     | Forecasting and Stock Recommendation | NOT STARTED |
@@ -321,6 +321,28 @@ Catatan: Checklist penyusunan dokumen menunjukkan dokumen telah disusun, bukan b
 
 ---
 
+## Phase 4 — Point of Sale
+
+**Status: COMPLETED (2026-11-13)**
+
+### Deliverables Verified
+
+- **Business Session + Payment Methods (4a)** — `business_schedules` (7 hari, closing 02:00 Jumat/Sabtu untuk buffer closing), `business_sessions` auto via `BusinessDateResolver` (cross-midnight), `payment_methods` (Cash/QRIS/Transfer).
+- **POS Interface + Cart (4b)** — Full-screen POS, product grid dengan filter kategori + search, cart via fetch API (add/update/remove/clear), `item_count` = total quantity, cart persist per user per session.
+- **Checkout + Payment + Stock Deduction (4c)** — `OrderService::checkout()` atomic, snapshot `order_items`, `sale_ingredient_usages` per ingredient usage, stock `sale_out` via `StockService`, payment validation (cash boleh overpay, non-cash exact), order auto-number `ORD-YYYYMMDD-XXX`, cart → converted.
+- **Receipt + PDF (4d)** — Receipt thermal-friendly 80mm HTML + CSS print, PDF via `barryvdh/laravel-dompdf`, `business_settings` table (shop info + footer), print + download buttons.
+- **Refund (4e)** — Full refund only, permission `pos.refund` (Owner/Admin), reversal stock via `return_in` (per `sale_ingredient_usages`), status → `refunded`, payment → `refunded`, notes audit trail, modal overlay.
+
+### Non-blocking Notes
+
+- Void sebelum bayar = cart abandoned (no order). No separate endpoint needed.
+- Partial refund belum didukung (v1 full refund).
+- `sale_ingredient_usages` tidak dihapus saat refund — snapshot historis dipertahankan. **Dataset ANN query di Phase 6 harus `WHERE orders.status != 'refunded'`**.
+- Refund tidak create payment row baru — status change di original payment row (audit via order notes).
+- Settings UI (edit shop_name, address, dll via browser) belum ada — akan dibuat di Phase 11 (Deployment & Documentation) atau Phase 9 (UI Refinement).
+
+---
+
 # 7. Business Data Readiness
 
 Data aktual dari Coffee Shop Seumpama Bunga masih perlu dikumpulkan dan diverifikasi.
@@ -427,19 +449,18 @@ Keputusan yang belum ditetapkan tidak boleh dianggap final oleh AI coding assist
 
 # 11. Next Actions
 
-Phase 3 selesai. Next: Phase 4 — Point of Sale (POS).
+Phase 4 selesai. Next: Phase 5 — Operational Reports.
 
-Phase 4 order (dependency-based):
+Phase 5 order:
 
-1. **Business Session + Payment Methods (4a)** — foundation untuk operational day & metode pembayaran.
-2. **POS Interface + Cart (4b)** — product catalog, search/filter, cart (add/update/remove, multi-cart).
-3. **Checkout + Payment + Stock Deduction (4c)** — manual payment, atomic stock-out via StockService, order records.
-4. **Receipt + Transaction History (4d)** — struk thermal-ready, PDF receipt, filter transaction.
-5. **Void / Refund (4e)** — cancel before pay (void), refund with reversal + audit trail.
+1. **Sales Reports (5a)** — daily/weekly/monthly, top products, revenue, average transaction value, sales by category/cashier.
+2. **Inventory Reports (5b)** — stock overview, movement history, usage per ingredient, low stock alert, stock opname history.
+3. **Purchasing Reports (5c)** — PO history, supplier performance, receiving history.
+4. **Expense Reports (5d)** — expense categories, period filter, summary.
 
-Phase 4 fokus: **transaksi penjualan** — modul inti operasional coffee shop.
+Phase 5 fokus: **laporan operasional** — sumber data untuk pengambilan keputusan.
 
-Phase 5 (Reports) setelah Phase 4 selesai.
+Phase 6 (Weather & Dataset) setelah Phase 5 selesai.
 
 ---
 
@@ -468,7 +489,8 @@ Setiap perubahan progress harus memenuhi ketentuan:
 | 2026-11-11 | Phase 1 completed: Laravel 12.72 bootstrap, manual auth, RBAC (13 permissions, 4 roles), application layout, reusable Blade components, Python FastAPI skeleton, Laravel↔Python health check (failure isolation verified)                                       |
 | 2026-11-11 | Phase 2 completed: 7 master data modules (Unit, Category, Ingredient, Product, Supplier, Customer, User Management) — all CRUD with validation + permission control; added x-select, x-file-input, x-password-input components; image upload with drag-and-drop |
 | 2026-11-13 | Phase 3 completed: recipe management + versioning, inventory movement (StockService atomic), stock opname draft→approve, purchasing + goods receipt with partial receive and outstanding tracking                                                               |
+| 2026-11-13 | Phase 4 completed: business session + payment methods, POS interface with cart, checkout with atomic stock deduction + sale_ingredient_usages snapshot, receipt (thermal + PDF) with business settings, refund with return_in reversal                          |
 
 ---
 
-**Current Overall Status: PHASE 3 COMPLETE — READY FOR PHASE 4**
+**Current Overall Status: PHASE 4 COMPLETE — READY FOR PHASE 5**
