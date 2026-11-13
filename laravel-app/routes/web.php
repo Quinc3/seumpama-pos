@@ -141,6 +141,33 @@ Route::middleware(['auth'])->group(function () {
             ->whereNumber('user')->name('users.destroy');
     });
 
+    // ============ RECIPES ============
+    Route::middleware('permission:products.view')->group(function () {
+        Route::get('recipes', [\App\Http\Controllers\RecipeController::class, 'index'])
+            ->name('recipes.index');
+        Route::get('recipes/{recipe}', [\App\Http\Controllers\RecipeController::class, 'show'])
+            ->whereNumber('recipe')
+            ->name('recipes.show');
+    });
+
+    Route::middleware('permission:products.manage')->group(function () {
+        Route::get('products/{product}/recipe/create', [\App\Http\Controllers\RecipeController::class, 'create'])
+            ->whereNumber('product')
+            ->name('recipes.create');
+        Route::post('products/{product}/recipe', [\App\Http\Controllers\RecipeController::class, 'store'])
+            ->whereNumber('product')
+            ->name('recipes.store');
+        Route::get('recipes/{recipe}/edit', [\App\Http\Controllers\RecipeController::class, 'edit'])
+            ->whereNumber('recipe')
+            ->name('recipes.edit');
+        Route::put('recipes/{recipe}', [\App\Http\Controllers\RecipeController::class, 'update'])
+            ->whereNumber('recipe')
+            ->name('recipes.update');
+        Route::delete('recipes/{recipe}', [\App\Http\Controllers\RecipeController::class, 'destroy'])
+            ->whereNumber('recipe')
+            ->name('recipes.destroy');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {
