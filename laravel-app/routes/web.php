@@ -268,6 +268,26 @@ Route::middleware(['auth'])->group(function () {
                 ->whereNumber('order')
                 ->name('orders.show');
         });
+
+        Route::middleware('permission:pos.access')->group(function () {
+            Route::get('orders', [\App\Http\Controllers\OrderController::class, 'index'])
+                ->name('orders.index');
+            Route::get('orders/{order}', [\App\Http\Controllers\OrderController::class, 'show'])
+                ->whereNumber('order')
+                ->name('orders.show');
+            Route::get('orders/{order}/receipt', [\App\Http\Controllers\OrderController::class, 'receipt'])
+                ->whereNumber('order')
+                ->name('orders.receipt');
+            Route::get('orders/{order}/pdf', [\App\Http\Controllers\OrderController::class, 'pdf'])
+                ->whereNumber('order')
+                ->name('orders.pdf');
+        });
+
+        Route::middleware('permission:pos.refund')->group(function () {
+            Route::post('orders/{order}/refund', [\App\Http\Controllers\OrderController::class, 'refund'])
+                ->whereNumber('order')
+                ->name('orders.refund');
+        });
     });
 
     // ============ HEALTH CHECK ============

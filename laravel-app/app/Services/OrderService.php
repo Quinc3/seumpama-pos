@@ -192,4 +192,61 @@ class OrderService
             return $order;
         });
     }
+    /**
+     * Process refund untuk order yang sudah paid.
+     * - Reversal stock via return_in movements (per sale_ingredient_usage)
+     * - Update order status → refunded
+     * - Update payment status → refunded
+     *
+     * @throws InvalidArgumentException|RuntimeException
+     */
+    public function refund(Order $order, string $reason): Order
+    {
+        if ($order->status !== 'paid') {
+            throw new InvalidArgumentException('Hanya order berstatus paid yang dapat di-refund.');
+        }
+
+        if (trim($reason) === '') {
+            throw new InvalidArgumentException('Alasan refund wajib diisi.');
+        }
+
+        return DB::transaction(function () use ($order, $reason) {
+            $order->load('items.usages.ingredient', 'payments');
+
+            $userName = auth()->user()->name ?? 'system';
+            $timestamp = now()->format('Y-m-d H:i');
+
+            foreach ($order->items as $orderItem) {
+                foreach ($orderItem->usages as $usage) {
+                    // Reversal: return_in dengan qty yang sama dengan total_quantity
+                    $this->stockService->record(
+                        $usage->ingredient,
+                        'return_in',
+                        (float) $usage->total_quantity,
+                        [
+                            'notes' => "Refund order {$order->order_number} ({$orderItem->product_name}) — {$reason}",
+                            'reference_type' => 'refund',
+                            'reference_id' => $order->id,
+                            'business_session_id' => $order->business_session_id,
+                        ]
+                    );
+                }
+            }
+
+            // Update status payment
+            foreach ($order->payments as $payment) {
+                $payment->update(['status' => 'refunded']);
+            }
+
+            // Update order
+            $appendedNotes = trim(($order->notes ?? '') . "\n[Refunded {$timestamp} by {$userName}] {$reason}");
+
+            $order->update([
+                'status' => 'refunded',
+                'notes' => $appendedNotes,
+            ]);
+
+            return $order->fresh();
+        });
+    }
 }
