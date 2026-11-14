@@ -14,6 +14,8 @@ class Settings:
     API_PREFIX: str = os.getenv("API_PREFIX", "/api/v1")
     API_TOKEN: str = os.getenv("API_TOKEN", "")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    MODEL_STORAGE_PATH: str = os.getenv("MODEL_STORAGE_PATH", str(BASE_DIR / "artifacts" / "models"))
+    MIN_TRAINING_SAMPLES: int = int(os.getenv("MIN_TRAINING_SAMPLES", "10"))
 
 
 settings = Settings()

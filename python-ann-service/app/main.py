@@ -1,10 +1,15 @@
 import logging
-from fastapi import FastAPI, HTTPException, Request
+from datetime import datetime
+
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+import app.state as training_state
 from app.config import settings
 from app.middleware import RequestIdMiddleware
-from app.responses import success_response, error_response
+from app.responses import error_response, success_response
+from app.schemas import TrainingRequest
+from app.training.pipeline import train_single_ingredient
 
 logging.basicConfig(
     level=settings.LOG_LEVEL,
@@ -53,3 +58,118 @@ async def health(request: Request):
         },
         request_id=request_id,
     )
+
+
+@app.post(f"{settings.API_PREFIX}/model/train", status_code=202)
+async def submit_training(
+    payload: TrainingRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+):
+    request_id = getattr(request.state, "request_id", "")
+
+    if training_state.job_exists(payload.training_id):
+        return JSONResponse(
+            status_code=409,
+            content=error_response(
+                message=f"Training ID '{payload.training_id}' sudah ada. Gunakan ID unik.",
+                code="DUPLICATE_TRAINING_ID",
+                request_id=request_id,
+            ),
+        )
+
+    training_state.create_job(payload.training_id)
+    logger.info(
+        f"[{request_id}] training {payload.training_id} queued "
+        f"({len(payload.target_ingredients)} ingredient(s), dataset={payload.dataset_version})"
+    )
+
+    background_tasks.add_task(_run_training, payload.training_id, payload, request_id)
+
+    return success_response(
+        message="Training request accepted",
+        data={"training_id": payload.training_id, "status": "queued"},
+        request_id=request_id,
+    )
+
+
+@app.get(f"{settings.API_PREFIX}/model/train/{{training_id}}")
+async def get_training_status(training_id: str, request: Request):
+    request_id = getattr(request.state, "request_id", "")
+    job = training_state.get_job(training_id)
+
+    if job is None:
+        return JSONResponse(
+            status_code=404,
+            content=error_response(
+                message=f"Training ID '{training_id}' tidak ditemukan.",
+                code="RESOURCE_NOT_FOUND",
+                request_id=request_id,
+            ),
+        )
+
+    return success_response(
+        message=f"Training status: {job['status']}",
+        data={
+            "training_id": training_id,
+            "status": job["status"],
+            "started_at": job["started_at"],
+            "completed_at": job["completed_at"],
+            "results": job["results"],
+            "error": job["error"],
+        },
+        request_id=request_id,
+    )
+
+
+def _run_training(training_id: str, payload: TrainingRequest, request_id: str):
+    """Background task — jangan sampai crash service."""
+    try:
+        training_state.update_job(
+            training_id,
+            status="running",
+            started_at=datetime.utcnow().isoformat() + "Z",
+        )
+        logger.info(f"[{request_id}] training {training_id} RUNNING")
+
+        results = []
+        for ing in payload.target_ingredients:
+            try:
+                r = train_single_ingredient(
+                    ingredient_id=ing.ingredient_id,
+                    ingredient_code=ing.ingredient_code,
+                    ingredient_name=ing.ingredient_name,
+                    records=ing.records,
+                    config=payload.training_config,
+                )
+                results.append(r)
+            except Exception as e:
+                logger.exception(f"[{request_id}] train error for {ing.ingredient_code}")
+                results.append({
+                    "ingredient_id": ing.ingredient_id,
+                    "ingredient_code": ing.ingredient_code,
+                    "ingredient_name": ing.ingredient_name,
+                    "status": "failed",
+                    "error": f"{type(e).__name__}: {e}",
+                })
+
+        completed_count = sum(1 for r in results if r.get("status") == "completed")
+        failed_count = len(results) - completed_count
+
+        training_state.update_job(
+            training_id,
+            status="completed" if failed_count == 0 else "failed",
+            completed_at=datetime.utcnow().isoformat() + "Z",
+            results=results,
+            error=None if failed_count == 0 else f"{failed_count} ingredient gagal.",
+        )
+        logger.info(f"[{request_id}] training {training_id} DONE ({completed_count} ok, {failed_count} failed)")
+
+    except Exception as e:
+        logger.exception(f"[{request_id}] training {training_id} FATAL")
+        training_state.update_job(
+            training_id,
+            status="failed",
+            completed_at=datetime.utcnow().isoformat() + "Z",
+            error=f"{type(e).__name__}: {e}",
+        )
