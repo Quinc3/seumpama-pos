@@ -12,8 +12,8 @@
 | Location              | Tigaraksa, Kabupaten Tangerang, Banten        |
 | Last Updated          | 2026-11-11                                    |
 | Timezone              | Asia/Jakarta                                  |
-| Overall Status        | PHASE 4 COMPLETE                              |
-| Implementation Status | PHASE 5 READY                                 |
+| Overall Status        | PHASE 6 COMPLETE                              |
+| Implementation Status | PHASE 7 READY                                 |
 
 ---
 
@@ -178,9 +178,9 @@ Total fase: 12 fase, mulai Phase 0 sampai Phase 11.
 | 2     | Master Data Management               | COMPLETED   |
 | 3     | Recipe and Inventory                 | COMPLETED   |
 | 4     | POS                                  | COMPLETED   |
-| 5     | Operational Reports                  | IN PROGRESS |
-| 6     | Weather and Dataset Preparation      | NOT STARTED |
-| 7     | Python ANN Integration               | NOT STARTED |
+| 5     | Operational Reports                  | COMPLETED   |
+| 6     | Weather and Dataset Preparation      | COMPLETED   |
+| 7     | Python ANN Integration               | IN PROGRESS |
 | 8     | Forecasting and Stock Recommendation | NOT STARTED |
 | 9     | UI Refinement                        | NOT STARTED |
 | 10    | Testing and Validation               | NOT STARTED |
@@ -343,6 +343,36 @@ Catatan: Checklist penyusunan dokumen menunjukkan dokumen telah disusun, bukan b
 
 ---
 
+## Phase 6 — Weather and Dataset Preparation
+
+**Status: COMPLETED (2026-11-14)**
+
+### Deliverables Verified
+
+- **Weather Integration (6a)** — Open-Meteo adapter via interface (`WeatherProviderInterface` + `OpenMeteoProvider`), hourly observations, business-date aggregation per operating hours, manual sync UI (idempotent), offline-safe error handling. Koordinat Seumpama: `-6.275405946900061, 106.48096423376577`.
+- **Dataset Generation (6b)** — aggregate `sale_ingredient_usages` + weather per business_date per ingredient, feature engineering (`lag_d1/d2/d3/d7`, `rolling_mean_3d/7d`, calendar), versioned snapshot immutable, `data_quality` (valid/partial), UI list + create + detail + records table with filter.
+
+### Feature Schema Final (v1)
+
+| Feature              | Source                                                  | Nullable?                  |
+| -------------------- | ------------------------------------------------------- | -------------------------- |
+| `actual_demand`      | SUM `sale_ingredient_usages.total_quantity` (paid only) | No (0 if no tx)            |
+| `lag_d1/d2/d3/d7`    | Consumption N days back                                 | Yes (null if out of range) |
+| `rolling_mean_3d/7d` | Avg consumption in window                               | Yes (null if incomplete)   |
+| `temperature`        | `weather_daily_summaries.average_temperature`           | Yes                        |
+| `rainfall`           | `weather_daily_summaries.total_rainfall`                | Yes                        |
+| `day_of_week`        | Carbon dayOfWeek (0=Sun, 6=Sat)                         | No                         |
+| `is_weekend`         | day_of_week ∈ {5, 6} (Jumat/Sabtu)                      | No                         |
+
+### Non-blocking Notes
+
+- **Dataset siap struktur, belum siap training meaningful.** Data transaksi saat ini: 2 paid orders (14 hari), target ANN butuh minimum 3 bulan per `ANN_SPECIFICATION.md` §5.2. Phase 7 pipeline akan ditest dengan data existing untuk verifikasi, tapi **evaluasi model tidak meaningful sampai data aktual 3+ bulan tersedia**.
+- Holiday indicator & weather condition encoding **belum termasuk** di schema v1 — bisa ditambah di iterasi berikutnya setelah ada data.
+- Weather data saat ini dari Open-Meteo forecast API (`past_days`), bukan historical API. Untuk data >92 hari ke belakang, perlu endpoint berbeda. Catat sebagai concern Phase 7/8.
+- Dataset refresh: buat version baru (immutable). Dataset lama tetap ada untuk audit.
+
+---
+
 # 7. Business Data Readiness
 
 Data aktual dari Coffee Shop Seumpama Bunga masih perlu dikumpulkan dan diverifikasi.
@@ -449,18 +479,18 @@ Keputusan yang belum ditetapkan tidak boleh dianggap final oleh AI coding assist
 
 # 11. Next Actions
 
-Phase 4 selesai. Next: Phase 5 — Operational Reports.
+Phase 6 selesai. Next: Phase 7 — Python ANN Integration.
 
-Phase 5 order:
+Phase 7 order:
 
-1. **Sales Reports (5a)** — daily/weekly/monthly, top products, revenue, average transaction value, sales by category/cashier.
-2. **Inventory Reports (5b)** — stock overview, movement history, usage per ingredient, low stock alert, stock opname history.
-3. **Purchasing Reports (5c)** — PO history, supplier performance, receiving history.
-4. **Expense Reports (5d)** — expense categories, period filter, summary.
+1. **7a — Python ANN Service extension** — train endpoint (async), Keras MLP, evaluation (MAE/RMSE), model artifact storage, prediction endpoint.
+2. **7b — Laravel integration** — extended AnnServiceClient, training request + polling status via queue, model metadata storage.
+3. **7c — Prediction flow + UI** — generate prediction, store result, display prediction vs actual, model management UI.
 
-Phase 5 fokus: **laporan operasional** — sumber data untuk pengambilan keputusan.
+Phase 7 fokus: **pipeline ANN end-to-end** (train → evaluate → predict).
+Model training dengan data existing (14 hari) hanya untuk verifikasi pipeline, **bukan untuk training meaningful**. Data aktual 3+ bulan tetap perlu dikumpulkan untuk skripsi.
 
-Phase 6 (Weather & Dataset) setelah Phase 5 selesai.
+Phase 8 (Forecasting) setelah Phase 7 selesai.
 
 ---
 
@@ -490,7 +520,8 @@ Setiap perubahan progress harus memenuhi ketentuan:
 | 2026-11-11 | Phase 2 completed: 7 master data modules (Unit, Category, Ingredient, Product, Supplier, Customer, User Management) — all CRUD with validation + permission control; added x-select, x-file-input, x-password-input components; image upload with drag-and-drop |
 | 2026-11-13 | Phase 3 completed: recipe management + versioning, inventory movement (StockService atomic), stock opname draft→approve, purchasing + goods receipt with partial receive and outstanding tracking                                                               |
 | 2026-11-13 | Phase 4 completed: business session + payment methods, POS interface with cart, checkout with atomic stock deduction + sale_ingredient_usages snapshot, receipt (thermal + PDF) with business settings, refund with return_in reversal                          |
+| 2026-11-14 | Phase 6 completed: weather integration (Open-Meteo adapter, hourly → business-date aggregation, idempotent manual sync), dataset generation (feature engineering with lags + rolling, versioned snapshot, immutable records)                                    |
 
 ---
 
-**Current Overall Status: PHASE 4 COMPLETE — READY FOR PHASE 5**
+**Current Overall Status: PHASE 6 COMPLETE — READY FOR PHASE 7**
