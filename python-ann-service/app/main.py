@@ -8,8 +8,9 @@ import app.state as training_state
 from app.config import settings
 from app.middleware import RequestIdMiddleware
 from app.responses import error_response, success_response
-from app.schemas import TrainingRequest
+from app.schemas import DemandPredictionRequest, TrainingRequest
 from app.training.pipeline import train_single_ingredient
+from app.training.predictor import list_available_models, predict as run_prediction
 
 logging.basicConfig(
     level=settings.LOG_LEVEL,
@@ -118,6 +119,61 @@ async def get_training_status(training_id: str, request: Request):
             "results": job["results"],
             "error": job["error"],
         },
+        request_id=request_id,
+    )
+
+
+@app.get(f"{settings.API_PREFIX}/model/status")
+async def get_model_status(request: Request):
+    request_id = getattr(request.state, "request_id", "")
+    models = list_available_models()
+
+    return success_response(
+        message=f"{len(models)} model tersedia",
+        data={
+            "model_available": len(models) > 0,
+            "available_models": len(models),
+            "models": models,
+        },
+        request_id=request_id,
+    )
+
+
+@app.post(f"{settings.API_PREFIX}/predictions/demand")
+async def predict_demand(payload: DemandPredictionRequest, request: Request):
+    request_id = getattr(request.state, "request_id", "")
+
+    results = []
+    for p in payload.predictions:
+        try:
+            features = p.features.model_dump()
+            predicted = run_prediction(p.model_version, features)
+            results.append({
+                "ingredient_id": p.ingredient_id,
+                "ingredient_code": p.ingredient_code,
+                "model_version": p.model_version,
+                "prediction_date": p.prediction_date.isoformat(),
+                "predicted_demand": predicted,
+                "status": "valid",
+                "error": None,
+            })
+            logger.info(f"[{request_id}] prediction OK {p.ingredient_code} v{p.model_version} = {predicted}")
+        except Exception as e:
+            logger.warning(f"[{request_id}] prediction failed {p.ingredient_code}: {e}")
+            results.append({
+                "ingredient_id": p.ingredient_id,
+                "ingredient_code": p.ingredient_code,
+                "model_version": p.model_version,
+                "prediction_date": p.prediction_date.isoformat(),
+                "predicted_demand": None,
+                "status": "failed",
+                "error": f"{type(e).__name__}: {e}",
+            })
+
+    all_ok = all(r["status"] == "valid" for r in results)
+    return success_response(
+        message="Demand prediction completed" if all_ok else "Prediction completed dengan error",
+        data={"predictions": results},
         request_id=request_id,
     )
 

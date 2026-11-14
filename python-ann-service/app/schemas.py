@@ -56,8 +56,43 @@ class IngredientResult(BaseModel):
 
 class TrainingStatus(BaseModel):
     training_id: str
-    status: str  # queued | running | completed | failed
+    status: str
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     results: Optional[list[IngredientResult]] = None
     error: Optional[str] = None
+
+
+class PredictionFeatures(BaseModel):
+    lag_d1: float
+    lag_d2: float
+    lag_d3: float
+    lag_d7: float
+    rolling_mean_3d: float
+    rolling_mean_7d: float
+    temperature: float
+    rainfall: float
+    day_of_week: int = Field(ge=0, le=6)
+    is_weekend: bool
+
+
+class PredictionInput(BaseModel):
+    ingredient_id: int
+    ingredient_code: str
+    model_version: str
+    prediction_date: date
+    features: PredictionFeatures
+
+
+class DemandPredictionRequest(BaseModel):
+    predictions: list[PredictionInput] = Field(min_length=1)
+
+
+class PredictionResult(BaseModel):
+    ingredient_id: int
+    ingredient_code: str
+    model_version: str
+    prediction_date: date
+    predicted_demand: float
+    status: str
+    error: str | None = None
