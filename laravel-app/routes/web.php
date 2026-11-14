@@ -290,6 +290,14 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+        // ============ REPORTS ============
+    Route::middleware('permission:reports.view')->group(function () {
+        Route::get('reports/sales', [\App\Http\Controllers\SalesReportController::class, 'index'])
+            ->name('reports.sales');
+        Route::get('reports/sales/pdf', [\App\Http\Controllers\SalesReportController::class, 'pdf'])
+            ->name('reports.sales.pdf');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {
