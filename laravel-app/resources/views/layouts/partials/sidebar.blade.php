@@ -37,7 +37,11 @@ $menuGroups = [
 'label' => 'Analytics',
 'items' => [
 ['route' => 'reports.sales', 'label' => 'Sales Reports', 'icon' => 'bar-chart', 'permission' => 'reports.view'],
-['route' => 'reports.inventory', 'label' => 'Inventory Reports', 'icon' => 'layers', 'permission' => 'reports.view'],
+['route' => 'reports.stock', 'label' => 'Inventory Reports', 'icon' => 'layers', 'permission' => 'inventory.view'],
+['route' => 'reports.movements', 'label' => 'Movement Report', 'icon' => 'arrow-right-left', 'permission' => 'inventory.view'],
+['route' => 'reports.usage', 'label' => 'Usage Report', 'icon' => 'trending-up', 'permission' => 'inventory.view'],
+['route' => 'reports.low-stock', 'label' => 'Low Stock Alert', 'icon' => 'shield', 'permission' => 'inventory.view'],
+['route' => 'reports.purchasing.orders', 'label' => 'Purchasing Report', 'icon' => 'shopping-bag', 'permission' => 'inventory.view'],
 ['route' => 'weather.index', 'label' => 'Weather Data', 'icon' => 'cloud', 'permission' => 'reports.view'],
 ['route' => 'dataset.index', 'label' => 'Dataset', 'icon' => 'database', 'permission' => 'ann.view'],
 ['route' => 'ann.prediction', 'label' => 'ANN Prediction', 'icon' => 'brain', 'permission' => 'ann.view'],

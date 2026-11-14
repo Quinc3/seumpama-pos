@@ -290,12 +290,35 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
-        // ============ REPORTS ============
+    // ============ REPORTS ============
     Route::middleware('permission:reports.view')->group(function () {
         Route::get('reports/sales', [\App\Http\Controllers\SalesReportController::class, 'index'])
             ->name('reports.sales');
         Route::get('reports/sales/pdf', [\App\Http\Controllers\SalesReportController::class, 'pdf'])
             ->name('reports.sales.pdf');
+    });
+
+    Route::middleware('permission:inventory.view')->group(function () {
+        Route::get('reports/stock', [\App\Http\Controllers\InventoryReportController::class, 'stock'])
+            ->name('reports.stock');
+        Route::get('reports/stock/pdf', [\App\Http\Controllers\InventoryReportController::class, 'stockPdf'])
+            ->name('reports.stock.pdf');
+        Route::get('reports/movements', [\App\Http\Controllers\InventoryReportController::class, 'movements'])
+            ->name('reports.movements');
+        Route::get('reports/usage', [\App\Http\Controllers\InventoryReportController::class, 'usage'])
+            ->name('reports.usage');
+        Route::get('reports/usage/pdf', [\App\Http\Controllers\InventoryReportController::class, 'usagePdf'])
+            ->name('reports.usage.pdf');
+        Route::get('reports/low-stock', [\App\Http\Controllers\InventoryReportController::class, 'lowStock'])
+            ->name('reports.low-stock');
+
+        // Purchasing reports
+        Route::get('reports/purchasing/orders', [\App\Http\Controllers\PurchasingReportController::class, 'orders'])
+            ->name('reports.purchasing.orders');
+        Route::get('reports/purchasing/suppliers', [\App\Http\Controllers\PurchasingReportController::class, 'suppliers'])
+            ->name('reports.purchasing.suppliers');
+        Route::get('reports/purchasing/receipts', [\App\Http\Controllers\PurchasingReportController::class, 'receipts'])
+            ->name('reports.purchasing.receipts');
     });
 
     // ============ HEALTH CHECK ============
