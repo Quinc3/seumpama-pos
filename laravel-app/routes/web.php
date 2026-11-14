@@ -344,6 +344,14 @@ Route::middleware(['auth'])->group(function () {
             ->name('reports.expenses.pdf');
     });
 
+    // ============ WEATHER ============
+    Route::middleware('permission:reports.view')->group(function () {
+        Route::get('weather', [\App\Http\Controllers\WeatherController::class, 'index'])
+            ->name('weather.index');
+        Route::post('weather/sync', [\App\Http\Controllers\WeatherController::class, 'sync'])
+            ->name('weather.sync');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {

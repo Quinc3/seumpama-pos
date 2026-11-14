@@ -26,7 +26,8 @@ class DatabaseSeeder extends Seeder
             BusinessScheduleSeeder::class,
             PaymentMethodSeeder::class,
             BusinessSettingSeeder::class,
-            ExpenseCategorySeeder::class
+            ExpenseCategorySeeder::class,
+            WeatherProviderSeeder::class,
         ]);
     }
 }

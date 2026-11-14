@@ -18,7 +18,7 @@ $variants = [
     @if ($icon)
     <x-icon :name="$icon" :size="18" class="shrink-0 mt-0.5" />
     @endif
-    <div class="flex-1">{{ $slot }}</div>
+    <div class="flex-1 break-words">{{ $slot }}</div>
     @if ($dismissible)
     <button type="button" @click="show = false" class="shrink-0 opacity-60 hover:opacity-100">
         <x-icon name="x" :size="16" />

@@ -42,4 +42,11 @@ return [
         'connect_timeout' => (int) env('ANN_SERVICE_CONNECT_TIMEOUT', 3),
     ],
 
+    'open_meteo' => [
+        'base_url' => 'https://api.open-meteo.com/v1/forecast',
+        'latitude' => env('OPEN_METEO_LAT', '-6.275405946900061'),
+        'longitude' => env('OPEN_METEO_LONG', '106.48096423376577'),
+        'timeout' => (int) env('OPEN_METEO_TIMEOUT', 10),
+    ],
+
 ];
