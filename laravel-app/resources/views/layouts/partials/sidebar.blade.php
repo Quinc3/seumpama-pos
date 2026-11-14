@@ -43,7 +43,7 @@ $menuGroups = [
 ['route' => 'reports.low-stock', 'label' => 'Low Stock Alert', 'icon' => 'shield', 'permission' => 'inventory.view'],
 ['route' => 'reports.purchasing.orders', 'label' => 'Purchasing Report', 'icon' => 'shopping-bag', 'permission' => 'inventory.view'],
 ['route' => 'weather.index', 'label' => 'Weather Data', 'icon' => 'cloud', 'permission' => 'reports.view'],
-['route' => 'dataset.index', 'label' => 'Dataset', 'icon' => 'database', 'permission' => 'ann.view'],
+['route' => 'datasets.index', 'label' => 'Dataset', 'icon' => 'database', 'permission' => 'ann.view'],
 ['route' => 'ann.prediction', 'label' => 'ANN Prediction', 'icon' => 'brain', 'permission' => 'ann.view'],
 ['route' => 'forecasting.index', 'label' => 'Stock Forecasting', 'icon' => 'trending-up', 'permission' => 'ann.view'],
 ],

@@ -352,6 +352,22 @@ Route::middleware(['auth'])->group(function () {
             ->name('weather.sync');
     });
 
+    // ============ DATASETS ============
+    Route::middleware('permission:ann.view')->group(function () {
+        Route::get('datasets', [\App\Http\Controllers\DatasetController::class, 'index'])
+            ->name('datasets.index');
+        Route::get('datasets/create', [\App\Http\Controllers\DatasetController::class, 'create'])
+            ->name('datasets.create');
+        Route::post('datasets', [\App\Http\Controllers\DatasetController::class, 'store'])
+            ->name('datasets.store');
+        Route::get('datasets/{dataset}', [\App\Http\Controllers\DatasetController::class, 'show'])
+            ->whereNumber('dataset')->name('datasets.show');
+        Route::post('datasets/{dataset}/archive', [\App\Http\Controllers\DatasetController::class, 'archive'])
+            ->whereNumber('dataset')->name('datasets.archive');
+        Route::delete('datasets/{dataset}', [\App\Http\Controllers\DatasetController::class, 'destroy'])
+            ->whereNumber('dataset')->name('datasets.destroy');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {
