@@ -321,6 +321,29 @@ Route::middleware(['auth'])->group(function () {
             ->name('reports.purchasing.receipts');
     });
 
+    // ============ EXPENSES ============
+    Route::middleware('permission:reports.view')->group(function () {
+        // CRUD
+        Route::get('expenses', [\App\Http\Controllers\ExpenseController::class, 'index'])
+            ->name('expenses.index');
+        Route::get('expenses/create', [\App\Http\Controllers\ExpenseController::class, 'create'])
+            ->name('expenses.create');
+        Route::post('expenses', [\App\Http\Controllers\ExpenseController::class, 'store'])
+            ->name('expenses.store');
+        Route::get('expenses/{expense}/edit', [\App\Http\Controllers\ExpenseController::class, 'edit'])
+            ->whereNumber('expense')->name('expenses.edit');
+        Route::put('expenses/{expense}', [\App\Http\Controllers\ExpenseController::class, 'update'])
+            ->whereNumber('expense')->name('expenses.update');
+        Route::delete('expenses/{expense}', [\App\Http\Controllers\ExpenseController::class, 'destroy'])
+            ->whereNumber('expense')->name('expenses.destroy');
+
+        // Report
+        Route::get('reports/expenses', [\App\Http\Controllers\ExpenseReportController::class, 'index'])
+            ->name('reports.expenses');
+        Route::get('reports/expenses/pdf', [\App\Http\Controllers\ExpenseReportController::class, 'pdf'])
+            ->name('reports.expenses.pdf');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {

@@ -54,6 +54,7 @@ $menuGroups = [
 ['route' => 'customers.index', 'label' => 'Customers', 'icon' => 'users', 'permission' => 'reports.view'],
 ['route' => 'promotions.index', 'label' => 'Promotions', 'icon' => 'percent', 'permission' => 'products.manage'],
 ['route' => 'expenses.index', 'label' => 'Expenses', 'icon' => 'wallet', 'permission' => 'reports.view'],
+['route' => 'reports.expenses', 'label' => 'Expense Report', 'icon' => 'bar-chart', 'permission' => 'reports.view'],
 ['route' => 'users.index', 'label' => 'Users & Roles', 'icon' => 'shield', 'permission' => 'users.manage'],
 ],
 ],
