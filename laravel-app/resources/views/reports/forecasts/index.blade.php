@@ -1,5 +1,12 @@
 <x-app-layout title="Stock Forecast" subtitle="Rekomendasi persediaan berbasis safety stock + reorder point">
     <x-slot name="actions">
+        <form method="POST" action="{{ route('stock-forecasts.predictions') }}" class="inline"
+            onsubmit="return confirm('Generate ANN prediction untuk semua ingredient target? Butuh ~30 detik.');">
+            @csrf
+            <x-button type="submit" variant="outline" icon="brain">
+                Generate Predictions
+            </x-button>
+        </form>
         <form method="POST" action="{{ route('stock-forecasts.generate') }}" class="inline"
             onsubmit="return confirm('Generate forecast untuk semua ingredient? Snapshot stok & perhitungan akan diambil saat ini.');">
             @csrf
@@ -11,6 +18,9 @@
 
     @if (session('success'))
     <div class="mb-4"><x-alert variant="success" icon="clipboard-check" dismissible>{{ session('success') }}</x-alert></div>
+    @endif
+    @if (session('warning'))
+    <div class="mb-4"><x-alert variant="warning" icon="shield" dismissible>{{ session('warning') }}</x-alert></div>
     @endif
     @if (session('error'))
     <div class="mb-4"><x-alert variant="error" icon="shield" dismissible>{{ session('error') }}</x-alert></div>
@@ -36,9 +46,16 @@
         </x-card>
     </div>
 
-    @if ($latestGenerated)
-    <p class="text-xs text-slate-500 mb-4">Last generated: {{ \Carbon\Carbon::parse($latestGenerated)->format('d M Y H:i') }}</p>
-    @endif
+    <div class="flex flex-wrap gap-4 text-xs text-slate-500 mb-4">
+        @if ($latestGenerated)
+        <span>Last forecast: <strong>{{ \Carbon\Carbon::parse($latestGenerated)->format('d M Y H:i') }}</strong></span>
+        @endif
+        @if ($latestPredictionDate)
+        <span>Latest prediction date: <strong>{{ \Carbon\Carbon::parse($latestPredictionDate)->format('d M Y') }}</strong> ({{ $latestPredictions->count() }} ingredients)</span>
+        @else
+        <span>Belum ada ANN prediction — klik <strong>"Generate Predictions"</strong> dulu agar forecast memakai prediksi ANN.</span>
+        @endif
+    </div>
 
     <x-card padding="none">
         @if ($ingredients->isEmpty())
@@ -55,6 +72,7 @@
                         <th class="text-right px-3 py-3 font-medium text-slate-600">Stok</th>
                         <th class="text-right px-3 py-3 font-medium text-slate-600">Avg/day</th>
                         <th class="text-right px-3 py-3 font-medium text-slate-600">σd</th>
+                        <th class="text-right px-3 py-3 font-medium text-slate-600">ANN Pred</th>
                         <th class="text-right px-3 py-3 font-medium text-slate-600">Lead</th>
                         <th class="text-right px-3 py-3 font-medium text-slate-600">SS</th>
                         <th class="text-right px-3 py-3 font-medium text-slate-600">ROP</th>
@@ -75,6 +93,10 @@
                         <td class="px-3 py-2 text-right font-mono text-slate-900">{{ number_format((float) $ing->current_stock, 2) }} {{ $ing->unit?->symbol }}</td>
                         <td class="px-3 py-2 text-right font-mono text-slate-700">{{ $f ? number_format((float) $f->average_daily_demand, 4) : '—' }}</td>
                         <td class="px-3 py-2 text-right font-mono text-slate-500">{{ $f ? number_format((float) $f->demand_std_dev, 4) : '—' }}</td>
+                        <td class="px-3 py-2 text-right font-mono {{ isset($latestPredictions[$ing->id]) ? 'text-blue-700 font-medium' : 'text-slate-400' }}">
+                            @php $pred = $latestPredictions[$ing->id] ?? null; @endphp
+                            {{ $pred ? number_format((float) $pred->predicted_demand, 2) : '—' }}
+                        </td>
                         <td class="px-3 py-2 text-right font-mono text-slate-600">{{ $f ? $f->lead_time_days . 'h' : ($ing->lead_time_days . 'h') }}</td>
                         <td class="px-3 py-2 text-right font-mono text-slate-700">{{ $f ? number_format((float) $f->safety_stock, 4) : '—' }}</td>
                         <td class="px-3 py-2 text-right font-mono text-slate-700">{{ $f ? number_format((float) $f->reorder_point, 4) : '—' }}</td>
@@ -115,8 +137,9 @@
     <x-alert variant="info" icon="clipboard-check" class="mt-4">
         <strong>Formula:</strong>
         Safety Stock = Z × σd × √L dengan Z (95%) = 1.6449.
-        Reorder Point = Average Daily Demand × Lead Time + Safety Stock.
-        Rekomendasi = max(0, ROP − Current Stock). Historical dihitung dari
-        <code>sale_ingredient_usages</code> (paid orders) dengan 0-fill untuk hari tanpa penjualan.
+        Reorder Point = Demand × Lead Time + Safety Stock, di mana <strong>Demand = ANN prediction</strong>
+        (kalau prediction tersedia) atau <strong>historical average</strong> (fallback).
+        Rekomendasi = max(0, ROP − Current Stock).
+        Generate <strong>Predictions</strong> dulu agar forecast memakai output ANN.
     </x-alert>
 </x-app-layout>

@@ -325,6 +325,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('stock-forecasts.index');
         Route::post('stock-forecasts/generate', [\App\Http\Controllers\StockForecastController::class, 'generate'])
             ->name('stock-forecasts.generate');
+        Route::post('stock-forecasts/predictions', [\App\Http\Controllers\StockForecastController::class, 'generatePredictions'])
+            ->name('stock-forecasts.predictions');
         Route::get('stock-forecasts/{stockForecast}', [\App\Http\Controllers\StockForecastController::class, 'show'])
             ->whereNumber('stockForecast')->name('stock-forecasts.show');
     });

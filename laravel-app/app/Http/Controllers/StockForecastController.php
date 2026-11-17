@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Ingredient;
 use App\Models\StockForecast;
 use App\Services\Forecast\StockForecastService;
+use App\Services\Forecast\PredictionService;
 use Illuminate\Http\Request;
+
 
 class StockForecastController extends Controller
 {
@@ -33,7 +35,23 @@ class StockForecastController extends Controller
 
         $latestGenerated = StockForecast::max('created_at');
 
-        return view('reports.forecasts.index', compact('ingredients', 'forecasts', 'summary', 'latestGenerated'));
+        $latestPredictions = \App\Models\AnnPrediction::where('status', 'generated')
+            ->orderByDesc('prediction_generated_at')
+            ->get()
+            ->unique('ingredient_id')
+            ->keyBy('ingredient_id');
+
+        $latestPredictionDate = \App\Models\AnnPrediction::where('status', 'generated')
+            ->max('prediction_date');
+
+        return view('reports.forecasts.index', compact(
+            'ingredients',
+            'forecasts',
+            'summary',
+            'latestGenerated',
+            'latestPredictions',
+            'latestPredictionDate'
+        ));
     }
 
     public function generate(StockForecastService $service)
@@ -49,6 +67,60 @@ class StockForecastController extends Controller
             return redirect()
                 ->route('stock-forecasts.index')
                 ->with('error', 'Gagal membuat forecast: ' . $e->getMessage());
+        }
+    }
+
+    public function generatePredictions(PredictionService $service)
+    {
+        set_time_limit(180);
+
+        try {
+            $result = $service->predictAll();
+
+            $success = $result['success'];
+            $failed = $result['failed'];
+            $total = $result['total'];
+
+            // Semua gagal → cek kalau itu karena ANN service down
+            if ($success === 0 && $failed > 0) {
+                $firstError = null;
+                foreach ($result['results'] as $r) {
+                    if (! empty($r['message'])) {
+                        $firstError = $r['message'];
+                        break;
+                    }
+                }
+
+                $isConnectionError = $firstError && (
+                    str_contains($firstError, 'Connection refused') ||
+                    str_contains($firstError, 'cURL error') ||
+                    str_contains($firstError, 'Failed to connect') ||
+                    str_contains($firstError, 'timed out')
+                );
+
+                $msg = $isConnectionError
+                    ? "Semua prediction gagal: ANN Service tidak dapat dihubungi. Pastikan uvicorn running di port 8001."
+                    : "Semua prediction gagal. Detail: " . substr($firstError ?? 'unknown', 0, 200);
+
+                return redirect()
+                    ->route('stock-forecasts.index')
+                    ->with('error', $msg);
+            }
+
+            // Partial atau sukses
+            $msg = "Prediction selesai ({$success}/{$total} sukses) untuk tanggal "
+                . $result['target_date']->format('d M Y') . ".";
+            if ($failed > 0) {
+                $msg .= " {$failed} ingredient gagal — lihat log.";
+            }
+
+            return redirect()
+                ->route('stock-forecasts.index')
+                ->with($failed > 0 ? 'warning' : 'success', $msg);
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('stock-forecasts.index')
+                ->with('error', 'Gagal membuat prediction: ' . $e->getMessage());
         }
     }
 
