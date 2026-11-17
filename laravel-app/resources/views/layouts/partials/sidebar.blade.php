@@ -21,7 +21,7 @@ $menuGroups = [
 'items' => [
 ['route' => 'units.index', 'label' => 'Units', 'icon' => 'layers', 'permission' => 'inventory.manage'],
 ['route' => 'ingredients.index', 'label' => 'Ingredients', 'icon' => 'package', 'permission' => 'inventory.view'],
-['route' => 'stock.overview', 'label' => 'Stock Overview', 'icon' => 'layers', 'permission' => 'inventory.view'],
+// Stock Overview dihapus — duplicate dengan Inventory Reports di bawah
 ['route' => 'inventory.movements.index', 'label' => 'Stock Movement', 'icon' => 'arrow-right-left', 'permission' => 'inventory.view'],
 ['route' => 'stock-opnames.index', 'label' => 'Stock Opname', 'icon' => 'clipboard-check', 'permission' => 'inventory.view'],
 ],
@@ -44,9 +44,7 @@ $menuGroups = [
 ['route' => 'reports.purchasing.orders', 'label' => 'Purchasing Report', 'icon' => 'shopping-bag', 'permission' => 'inventory.view'],
 ['route' => 'weather.index', 'label' => 'Weather Data', 'icon' => 'cloud', 'permission' => 'reports.view'],
 ['route' => 'datasets.index', 'label' => 'Dataset', 'icon' => 'database', 'permission' => 'ann.view'],
-['route' => 'ann.models.index', 'label' => 'ANN Models', 'icon' => 'brain', 'permission' => 'ann.view'],
-['route' => 'ann.training.index', 'label' => 'Training Runs', 'icon' => 'layers', 'permission' => 'ann.view'],
-['route' => 'ann.prediction', 'label' => 'ANN Prediction', 'icon' => 'brain', 'permission' => 'ann.view'],
+// ANN Prediction dihapus — prediction terintegrasi di Stock Forecasting
 ['route' => 'stock-forecasts.index', 'label' => 'Stock Forecasting', 'icon' => 'trending-up', 'permission' => 'inventory.view'],
 ],
 ],
@@ -54,7 +52,7 @@ $menuGroups = [
 'label' => 'Management',
 'items' => [
 ['route' => 'customers.index', 'label' => 'Customers', 'icon' => 'users', 'permission' => 'reports.view'],
-['route' => 'promotions.index', 'label' => 'Promotions', 'icon' => 'percent', 'permission' => 'products.manage'],
+// Promotions — Phase 6/7 future
 ['route' => 'expenses.index', 'label' => 'Expenses', 'icon' => 'wallet', 'permission' => 'reports.view'],
 ['route' => 'reports.expenses', 'label' => 'Expense Report', 'icon' => 'bar-chart', 'permission' => 'reports.view'],
 ['route' => 'users.index', 'label' => 'Users & Roles', 'icon' => 'shield', 'permission' => 'users.manage'],
@@ -63,7 +61,7 @@ $menuGroups = [
 [
 'label' => 'System',
 'items' => [
-['route' => 'settings.index', 'label' => 'Settings', 'icon' => 'settings', 'permission' => 'settings.manage'],
+// Settings — Phase 11 future
 ],
 ],
 ];
