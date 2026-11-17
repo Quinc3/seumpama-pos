@@ -57,82 +57,112 @@
         @endif
     </div>
 
-    <x-card padding="none">
-        @if ($ingredients->isEmpty())
-        <div class="p-12 text-center">
-            <x-icon name="trending-up" :size="48" class="mx-auto text-slate-300 mb-3" />
-            <p class="text-slate-600 font-medium">Tidak ada ingredient dengan is_prediction_target</p>
-        </div>
-        @else
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead class="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                        <th class="text-left px-3 py-3 font-medium text-slate-600">Ingredient</th>
-                        <th class="text-right px-3 py-3 font-medium text-slate-600">Stok</th>
-                        <th class="text-right px-3 py-3 font-medium text-slate-600">Avg/day</th>
-                        <th class="text-right px-3 py-3 font-medium text-slate-600">σd</th>
-                        <th class="text-right px-3 py-3 font-medium text-slate-600">ANN Pred</th>
-                        <th class="text-right px-3 py-3 font-medium text-slate-600">Lead</th>
-                        <th class="text-right px-3 py-3 font-medium text-slate-600">SS</th>
-                        <th class="text-right px-3 py-3 font-medium text-slate-600">ROP</th>
-                        <th class="text-right px-3 py-3 font-medium text-slate-600">Rekomendasi</th>
-                        <th class="text-center px-3 py-3 font-medium text-slate-600">Coverage</th>
-                        <th class="text-left px-3 py-3 font-medium text-slate-600">Status</th>
-                        <th class="text-right px-3 py-3 font-medium text-slate-600"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @foreach ($ingredients as $ing)
-                    @php $f = $forecasts[$ing->id] ?? null; @endphp
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-3 py-2">
-                            <div class="font-medium text-slate-900">{{ $ing->name }}</div>
-                            <div class="text-xs text-slate-400 font-mono">{{ $ing->sku }}</div>
-                        </td>
-                        <td class="px-3 py-2 text-right font-mono text-slate-900">{{ number_format((float) $ing->current_stock, 2) }} {{ $ing->unit?->symbol }}</td>
-                        <td class="px-3 py-2 text-right font-mono text-slate-700">{{ $f ? number_format((float) $f->average_daily_demand, 4) : '—' }}</td>
-                        <td class="px-3 py-2 text-right font-mono text-slate-500">{{ $f ? number_format((float) $f->demand_std_dev, 4) : '—' }}</td>
-                        <td class="px-3 py-2 text-right font-mono {{ isset($latestPredictions[$ing->id]) ? 'text-blue-700 font-medium' : 'text-slate-400' }}">
-                            @php $pred = $latestPredictions[$ing->id] ?? null; @endphp
-                            {{ $pred ? number_format((float) $pred->predicted_demand, 2) : '—' }}
-                        </td>
-                        <td class="px-3 py-2 text-right font-mono text-slate-600">{{ $f ? $f->lead_time_days . 'h' : ($ing->lead_time_days . 'h') }}</td>
-                        <td class="px-3 py-2 text-right font-mono text-slate-700">{{ $f ? number_format((float) $f->safety_stock, 4) : '—' }}</td>
-                        <td class="px-3 py-2 text-right font-mono text-slate-700">{{ $f ? number_format((float) $f->reorder_point, 4) : '—' }}</td>
-                        <td class="px-3 py-2 text-right font-mono font-medium {{ $f && (float) $f->recommended_quantity > 0 ? 'text-blue-700' : 'text-slate-400' }}">
-                            {{ $f ? number_format((float) $f->recommended_quantity, 2) : '—' }}
-                        </td>
-                        <td class="px-3 py-2 text-center text-xs text-slate-600">
-                            {{ $f?->estimated_coverage_days !== null ? $f->estimated_coverage_days . ' hari' : '—' }}
-                        </td>
-                        <td class="px-3 py-2">
-                            @if ($f)
-                            @php
-                            $v = match($f->status) {
-                            'normal' => 'success',
-                            'warning' => 'warning',
-                            'critical' => 'danger',
-                            default => 'neutral',
-                            };
-                            @endphp
-                            <x-badge :variant="$v">{{ ucfirst($f->status) }}</x-badge>
-                            @else
-                            <x-badge variant="neutral">Belum ada</x-badge>
-                            @endif
-                        </td>
-                        <td class="px-3 py-2 text-right">
-                            @if ($f)
-                            <a href="{{ route('stock-forecasts.show', $f) }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Detail</a>
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        @endif
-    </x-card>
+    <form method="GET" action="{{ route('purchase-orders.create') }}" id="po-form">
+        <x-card padding="none">
+            @if ($ingredients->isEmpty())
+            <div class="p-12 text-center">
+                <x-icon name="trending-up" :size="48" class="mx-auto text-slate-300 mb-3" />
+                <p class="text-slate-600 font-medium">Tidak ada ingredient dengan is_prediction_target</p>
+            </div>
+            @else
+
+            <div class="p-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <div class="text-sm text-slate-600">
+                    Pilih ingredient dengan recommendation &gt; 0, lalu klik
+                    <strong>Buat PO</strong>.
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-500" id="selected-count">0 dipilih</span>
+                    <button type="submit" form="po-form"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+                        <x-icon name="shopping-bag" :size="16" />
+                        Buat PO
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="text-center px-2 py-3 font-medium text-slate-600 w-10"></th>
+                            <th class="text-left px-3 py-3 font-medium text-slate-600">Ingredient</th>
+                            <th class="text-right px-3 py-3 font-medium text-slate-600">Stok</th>
+                            <th class="text-right px-3 py-3 font-medium text-slate-600">Avg/day</th>
+                            <th class="text-right px-3 py-3 font-medium text-slate-600">σd</th>
+                            <th class="text-right px-3 py-3 font-medium text-slate-600">ANN Pred</th>
+                            <th class="text-right px-3 py-3 font-medium text-slate-600">Lead</th>
+                            <th class="text-right px-3 py-3 font-medium text-slate-600">SS</th>
+                            <th class="text-right px-3 py-3 font-medium text-slate-600">ROP</th>
+                            <th class="text-right px-3 py-3 font-medium text-slate-600">Rekomendasi</th>
+                            <th class="text-center px-3 py-3 font-medium text-slate-600">Coverage</th>
+                            <th class="text-left px-3 py-3 font-medium text-slate-600">Status</th>
+                            <th class="text-right px-3 py-3 font-medium text-slate-600"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach ($ingredients as $ing)
+                        @php
+                        $f = $forecasts[$ing->id] ?? null;
+                        $needsOrder = $f && (float) $f->recommended_quantity > 0;
+                        @endphp
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-2 py-2 text-center">
+                                @if ($needsOrder)
+                                <input type="checkbox" name="from_forecast[]" value="{{ $f->id }}"
+                                    data-rec="{{ (float) $f->recommended_quantity }}"
+                                    class="po-checkbox h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
+                                @else
+                                <span class="text-slate-300 text-xs">—</span>
+                                @endif
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="font-medium text-slate-900">{{ $ing->name }}</div>
+                                <div class="text-xs text-slate-400 font-mono">{{ $ing->sku }}</div>
+                            </td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-900">{{ number_format((float) $ing->current_stock, 2) }} {{ $ing->unit?->symbol }}</td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-700">{{ $f ? number_format((float) $f->average_daily_demand, 4) : '—' }}</td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-500">{{ $f ? number_format((float) $f->demand_std_dev, 4) : '—' }}</td>
+                            <td class="px-3 py-2 text-right font-mono {{ isset($latestPredictions[$ing->id]) ? 'text-blue-700 font-medium' : 'text-slate-400' }}">
+                                @php $pred = $latestPredictions[$ing->id] ?? null; @endphp
+                                {{ $pred ? number_format((float) $pred->predicted_demand, 2) : '—' }}
+                            </td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-600">{{ $f ? $f->lead_time_days . 'h' : ($ing->lead_time_days . 'h') }}</td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-700">{{ $f ? number_format((float) $f->safety_stock, 4) : '—' }}</td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-700">{{ $f ? number_format((float) $f->reorder_point, 4) : '—' }}</td>
+                            <td class="px-3 py-2 text-right font-mono font-medium {{ $f && (float) $f->recommended_quantity > 0 ? 'text-blue-700' : 'text-slate-400' }}">
+                                {{ $f ? number_format((float) $f->recommended_quantity, 2) : '—' }}
+                            </td>
+                            <td class="px-3 py-2 text-center text-xs text-slate-600">
+                                {{ $f?->estimated_coverage_days !== null ? $f->estimated_coverage_days . ' hari' : '—' }}
+                            </td>
+                            <td class="px-3 py-2">
+                                @if ($f)
+                                @php
+                                $v = match($f->status) {
+                                'normal' => 'success',
+                                'warning' => 'warning',
+                                'critical' => 'danger',
+                                default => 'neutral',
+                                };
+                                @endphp
+                                <x-badge :variant="$v">{{ ucfirst($f->status) }}</x-badge>
+                                @else
+                                <x-badge variant="neutral">Belum ada</x-badge>
+                                @endif
+                            </td>
+                            <td class="px-3 py-2 text-right">
+                                @if ($f)
+                                <a href="{{ route('stock-forecasts.show', $f) }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Detail</a>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </x-card>
+    </form>
 
     <x-alert variant="info" icon="clipboard-check" class="mt-4">
         <strong>Formula:</strong>
@@ -142,4 +172,39 @@
         Rekomendasi = max(0, ROP − Current Stock).
         Generate <strong>Predictions</strong> dulu agar forecast memakai output ANN.
     </x-alert>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('po-form');
+            if (!form) return;
+            const checkboxes = form.querySelectorAll('.po-checkbox');
+            const countEl = document.getElementById('selected-count');
+            const btn = form.querySelector('button[type="submit"]');
+
+            function updateCount() {
+                const checked = Array.from(checkboxes).filter(c => c.checked);
+                const total = checked.reduce((sum, c) => sum + parseFloat(c.dataset.rec || 0), 0);
+
+                if (checked.length === 0) {
+                    countEl.textContent = '0 dipilih';
+                } else {
+                    countEl.textContent = checked.length + ' dipilih • total ' +
+                        new Intl.NumberFormat('id-ID', {
+                            maximumFractionDigits: 2
+                        }).format(total);
+                }
+                countEl.classList.toggle('text-blue-700', checked.length > 0);
+                countEl.classList.toggle('font-semibold', checked.length > 0);
+
+                if (btn) {
+                    btn.disabled = checked.length === 0;
+                    btn.classList.toggle('opacity-50', checked.length === 0);
+                    btn.classList.toggle('cursor-not-allowed', checked.length === 0);
+                }
+            }
+
+            checkboxes.forEach(c => c.addEventListener('change', updateCount));
+            updateCount();
+        });
+    </script>
 </x-app-layout>

@@ -29,12 +29,29 @@ class PurchaseOrderController extends Controller
         return view('purchase-orders.index', compact('orders', 'suppliers'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
         $ingredients = Ingredient::where('is_active', true)->with('unit')->orderBy('name')->get();
 
-        return view('purchase-orders.create', compact('suppliers', 'ingredients'));
+        // Pre-fill dari forecast recommendation
+        $prefillItems = [];
+        if ($request->filled('from_forecast')) {
+            $forecastIds = array_filter((array) $request->input('from_forecast', []));
+            $forecasts = \App\Models\StockForecast::whereIn('id', $forecastIds)
+                ->with('ingredient')
+                ->get();
+
+            foreach ($forecasts as $f) {
+                $prefillItems[] = [
+                    'ingredient_id' => (int) $f->ingredient_id,
+                    'quantity' => (float) $f->recommended_quantity,
+                    'unit_price' => '',
+                ];
+            }
+        }
+
+        return view('purchase-orders.create', compact('suppliers', 'ingredients', 'prefillItems'));
     }
 
     public function store(Request $request)

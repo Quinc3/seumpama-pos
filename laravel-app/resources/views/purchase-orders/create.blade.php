@@ -4,9 +4,18 @@
     </x-slot>
 
     <x-card class="max-w-4xl">
+        @if (! empty($prefillItems))
+        <x-alert variant="info" icon="trending-up" class="mb-4">
+            <strong>{{ count($prefillItems) }} item</strong> di-prefill dari forecast recommendation.
+            Lengkapi harga satuan & supplier untuk menyelesaikan PO.
+        </x-alert>
+        @endif
+        @php
+        $initialItems = ! empty($prefillItems) ? $prefillItems : [['ingredient_id' => '', 'quantity' => '', 'unit_price' => '']];
+        @endphp
         <form method="POST" action="{{ route('purchase-orders.store') }}" class="space-y-6"
             x-data="{
-                  items: [{ ingredient_id: '', quantity: '', unit_price: '' }],
+                  items: @js($initialItems),
                   ingredients: {{ $ingredients->map(fn($i) => [
                       'id' => $i->id,
                       'name' => $i->name,
