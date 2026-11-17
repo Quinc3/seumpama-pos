@@ -47,7 +47,7 @@ $menuGroups = [
 ['route' => 'ann.models.index', 'label' => 'ANN Models', 'icon' => 'brain', 'permission' => 'ann.view'],
 ['route' => 'ann.training.index', 'label' => 'Training Runs', 'icon' => 'layers', 'permission' => 'ann.view'],
 ['route' => 'ann.prediction', 'label' => 'ANN Prediction', 'icon' => 'brain', 'permission' => 'ann.view'],
-['route' => 'forecasting.index', 'label' => 'Stock Forecasting', 'icon' => 'trending-up', 'permission' => 'ann.view'],
+['route' => 'stock-forecasts.index', 'label' => 'Stock Forecasting', 'icon' => 'trending-up', 'permission' => 'inventory.view'],
 ],
 ],
 [

@@ -319,6 +319,14 @@ Route::middleware(['auth'])->group(function () {
             ->name('reports.purchasing.suppliers');
         Route::get('reports/purchasing/receipts', [\App\Http\Controllers\PurchasingReportController::class, 'receipts'])
             ->name('reports.purchasing.receipts');
+
+        // Forecast / Stock Recommendation
+        Route::get('stock-forecasts', [\App\Http\Controllers\StockForecastController::class, 'index'])
+            ->name('stock-forecasts.index');
+        Route::post('stock-forecasts/generate', [\App\Http\Controllers\StockForecastController::class, 'generate'])
+            ->name('stock-forecasts.generate');
+        Route::get('stock-forecasts/{stockForecast}', [\App\Http\Controllers\StockForecastController::class, 'show'])
+            ->whereNumber('stockForecast')->name('stock-forecasts.show');
     });
 
     // ============ EXPENSES ============
