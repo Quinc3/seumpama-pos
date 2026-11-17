@@ -1,12 +1,22 @@
 <x-app-layout :title="$dataset->version" :subtitle="$dataset->dataset_name">
     <x-slot name="actions">
+        @if (in_array($dataset->status, ['validated', 'approved']))
+        <form method="POST" action="{{ route('ann.training.train', $dataset) }}" class="inline"
+            onsubmit="return confirm('Mulai training 11 ingredient? Proses memakan waktu 2-3 menit. Jangan tutup tab ini.');">
+            @csrf
+            <x-button type="submit" variant="primary" icon="brain">
+                Train Model
+            </x-button>
+        </form>
+        @endif
         @if ($dataset->status !== 'archived')
         <form method="POST" action="{{ route('datasets.archive', $dataset) }}" class="inline"
-            onsubmit="return confirm('Arsipkan dataset ini? Data akan tetap ada, tapi tidak bisa dipakai untuk training baru.');">
+            onsubmit="return confirm('Arsipkan dataset ini?');">
             @csrf
             <x-button type="submit" variant="outline" icon="package">Arsipkan</x-button>
         </form>
         @endif
+        <x-button :href="route('ann.models.index')" tag="a" variant="outline" icon="brain">Models</x-button>
         <x-button :href="route('datasets.index')" tag="a" variant="outline">Kembali</x-button>
     </x-slot>
 

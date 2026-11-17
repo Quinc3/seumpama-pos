@@ -200,50 +200,58 @@ class AnnTrainingService
             }
 
             $modelName = "ANN Model — {$run->datasetVersion?->version}";
+            $lastModelId = null;
 
             foreach ($completedResults as $result) {
-                $model = AnnModel::create([
-                    'model_name' => $modelName,
-                    'model_version' => $result['model_version'],
-                    'algorithm' => 'MLP',
-                    'architecture' => [
-                        'input_features' => count($result['feature_schema']['features'] ?? []),
-                        'hidden_layers' => [16, 8],
-                        'output' => 1,
-                        'activation' => 'relu',
-                        'output_activation' => 'linear',
-                    ],
-                    'feature_schema' => $result['feature_schema'] ?? [],
-                    'target_definition' => [
-                        'target' => 'actual_demand',
-                        'description' => 'Daily ingredient demand',
-                    ],
-                    'artifact_path' => $result['artifact_path'] ?? null,
-                    'scaler_path' => $result['scaler_path'] ?? null,
-                    'status' => 'candidate',
-                    'dataset_version_id' => $run->dataset_version_id,
-                    'created_by' => $run->created_by,
-                ]);
+                $model = AnnModel::firstOrCreate(
+                    ['model_version' => $result['model_version']],
+                    [
+                        'model_name' => $modelName,
+                        'algorithm' => 'MLP',
+                        'architecture' => [
+                            'input_features' => count($result['feature_schema']['features'] ?? []),
+                            'hidden_layers' => [16, 8],
+                            'output' => 1,
+                            'activation' => 'relu',
+                            'output_activation' => 'linear',
+                        ],
+                        'feature_schema' => $result['feature_schema'] ?? [],
+                        'target_definition' => [
+                            'target' => 'actual_demand',
+                            'description' => 'Daily ingredient demand',
+                        ],
+                        'artifact_path' => $result['artifact_path'] ?? null,
+                        'scaler_path' => $result['scaler_path'] ?? null,
+                        'status' => 'candidate',
+                        'dataset_version_id' => $run->dataset_version_id,
+                        'created_by' => $run->created_by,
+                    ]
+                );
 
-                AnnModelIngredient::create([
-                    'ann_model_id' => $model->id,
-                    'ingredient_id' => $result['ingredient_id'],
-                    'output_index' => 0,
-                    'evaluation_metrics' => [
-                        'mae' => $result['metrics']['mae'] ?? null,
-                        'rmse' => $result['metrics']['rmse'] ?? null,
-                        'baseline_mae' => $result['baseline']['mae'] ?? null,
-                        'baseline_rmse' => $result['baseline']['rmse'] ?? null,
-                        'samples' => $result['samples'] ?? null,
+                AnnModelIngredient::firstOrCreate(
+                    [
+                        'ann_model_id' => $model->id,
+                        'ingredient_id' => $result['ingredient_id'],
                     ],
-                ]);
+                    [
+                        'output_index' => 0,
+                        'evaluation_metrics' => [
+                            'mae' => $result['metrics']['mae'] ?? null,
+                            'rmse' => $result['metrics']['rmse'] ?? null,
+                            'baseline_mae' => $result['baseline']['mae'] ?? null,
+                            'baseline_rmse' => $result['baseline']['rmse'] ?? null,
+                            'samples' => $result['samples'] ?? null,
+                        ],
+                    ]
+                );
 
-                $run->update(['ann_model_id' => $model->id]);
+                $lastModelId = $model->id;
             }
 
             $run->update([
                 'training_status' => 'completed',
                 'training_completed_at' => now(),
+                'ann_model_id' => $lastModelId,
                 'test_metrics' => array_map(fn($r) => [
                     'ingredient_id' => $r['ingredient_id'],
                     'mae' => $r['metrics']['mae'] ?? null,
@@ -253,5 +261,39 @@ class AnnTrainingService
                 ], array_values($completedResults)),
             ]);
         });
+    }
+
+    /**
+     * Pull ulang status dari Python (recovery kalau Laravel timeout).
+     * Idempotent — aman dipanggil berkali-kali.
+     */
+    public function refreshFromPython(AnnTrainingRun $run): array
+    {
+        try {
+            $response = $this->client->getTrainingStatus($run->training_id);
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => 'Gagal fetch dari Python: ' . $e->getMessage()];
+        }
+
+        $data = $response['data'] ?? [];
+        $status = $data['status'] ?? null;
+
+        if ($status === 'completed') {
+            if ($run->training_status !== 'completed') {
+                $this->handleCompleted($run, $data);
+            }
+            return ['success' => true, 'message' => 'Training completed. Model sudah tersimpan.'];
+        }
+
+        if ($status === 'failed') {
+            $run->update([
+                'training_status' => 'failed',
+                'error_message' => $data['error'] ?? 'Training failed di Python.',
+                'training_completed_at' => now(),
+            ]);
+            return ['success' => false, 'message' => 'Training failed: ' . ($data['error'] ?? 'unknown')];
+        }
+
+        return ['success' => false, 'message' => "Training masih '{$status}' di Python. Coba lagi beberapa saat lagi."];
     }
 }

@@ -368,6 +368,30 @@ Route::middleware(['auth'])->group(function () {
             ->whereNumber('dataset')->name('datasets.destroy');
     });
 
+    // ============ ANN MODELS & TRAINING ============
+    Route::middleware('permission:ann.view')->group(function () {
+        Route::get('ann/models', [\App\Http\Controllers\AnnModelController::class, 'index'])
+            ->name('ann.models.index');
+        Route::get('ann/models/{annModel}', [\App\Http\Controllers\AnnModelController::class, 'show'])
+            ->whereNumber('annModel')->name('ann.models.show');
+
+        Route::get('ann/training', [\App\Http\Controllers\AnnTrainingController::class, 'index'])
+            ->name('ann.training.index');
+        Route::get('ann/training/{annTrainingRun}', [\App\Http\Controllers\AnnTrainingController::class, 'show'])
+            ->whereNumber('annTrainingRun')->name('ann.training.show');
+    });
+
+    Route::middleware('permission:ann.train')->group(function () {
+        Route::post('datasets/{dataset}/train', [\App\Http\Controllers\AnnTrainingController::class, 'train'])
+            ->whereNumber('dataset')->name('ann.training.train');
+        Route::post('ann/training/{annTrainingRun}/refresh', [\App\Http\Controllers\AnnTrainingController::class, 'refreshStatus'])
+            ->whereNumber('annTrainingRun')->name('ann.training.refresh');
+        Route::post('ann/models/{annModel}/activate', [\App\Http\Controllers\AnnModelController::class, 'activate'])
+            ->whereNumber('annModel')->name('ann.models.activate');
+        Route::post('ann/models/{annModel}/archive', [\App\Http\Controllers\AnnModelController::class, 'archive'])
+            ->whereNumber('annModel')->name('ann.models.archive');
+    });
+
     // ============ HEALTH CHECK ============
     Route::get('/health/ann', function (AnnServiceClient $client) {
         try {
