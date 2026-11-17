@@ -13,7 +13,8 @@
 | Last Updated          | 2026-11-11                                    |
 | Timezone              | Asia/Jakarta                                  |
 | Overall Status        | PHASE 8 COMPLETE                              |
-| Implementation Status | PHASE 9 READY (optional)                      |
+| Overall Status        | PHASE 9 PARTIAL (dashboard + sidebar)         |
+| Implementation Status | SKRIPSI DEMO READY                            |
 
 ---
 
@@ -182,8 +183,8 @@ Total fase: 12 fase, mulai Phase 0 sampai Phase 11.
 | 6     | Weather and Dataset Preparation      | COMPLETED   |
 | 7     | Python ANN Integration               | COMPLETED   |
 | 8     | Forecasting and Stock Recommendation | COMPLETED   |
-| 9     | UI Refinement                        | OPTIONAL    |
-| 10    | Testing and Validation               | NOT STARTED |
+| 9     | UI Refinement                        | PARTIAL     |
+| 10    | Testing and Validation               | RECOMMENDED |
 | 11    | Deployment and Documentation         | NOT STARTED |
 
 ## 5.1 Phase Status Definitions
@@ -449,6 +450,24 @@ Catatan: Checklist penyusunan dokumen menunjukkan dokumen telah disusun, bukan b
 
 ---
 
+## Phase 9 — UI Refinement (Partial)
+
+**Status: PARTIAL (2026-11-17)**
+
+### Completed
+
+- **Sidebar cleanup** — semua menu clickable: Transactions → `orders.index`, Stock Forecasting → `stock-forecasts.index`, Stock Overview dihapus (duplikat), ANN Prediction dihapus (terintegrasi di Forecasting), Promotions + Settings di-comment (future phases).
+- **Dashboard real data** — 4 KPI cards (penjualan hari ini, item terjual, rata-rata transaksi, stok kritis), 7-day sales trend bar chart (CSS), top 5 produk (7 hari), recent 5 orders, low stock alerts, purchase recommendations (dari forecast).
+
+### Not Done (Optional)
+
+- Chart.js integration untuk grafik interaktif (bar chart CSS sudah cukup untuk demo)
+- Loading state skeleton (state saat ini simple spinner)
+- Empty state polish per halaman (sudah ada di banyak halaman)
+- Mobile UI fine-tuning (sudah responsive via Tailwind)
+
+---
+
 # 7. Business Data Readiness
 
 Data aktual dari Coffee Shop Seumpama Bunga masih perlu dikumpulkan dan diverifikasi.
@@ -555,29 +574,39 @@ Keputusan yang belum ditetapkan tidak boleh dianggap final oleh AI coding assist
 
 # 11. Next Actions
 
-Phase 8 selesai. **ALUR SKRIPSI COMPLETE** — sales → dataset → ANN training → ANN prediction → safety stock → ROP → procurement recommendation → PO.
+Dashboard + sidebar sudah demo-ready. **Fokus sekarang: PERSIAPAN SIDANG.**
 
-Phase 9-11 (optional untuk skripsi):
+Yang tersisa untuk sidang (prioritas tinggi → rendah):
 
-1. **Phase 9 — UI Refinement** (optional):
-   - Konsistensi visual antar halaman
-   - Chart visualization (Chart.js) untuk sales trend, prediction vs actual
-   - Loading state / empty state polish
-   - Bisa skip kalau UI sudah cukup untuk sidang
+1. **Dokumentasi User Manual** (recommended, 1-2 jam):
+   - `docs/USER_MANUAL.md` — alur operasional coffee shop
+   - Login, POS, kelola stok, purchase, laporan
+   - Screenshot + langkah-langkah
 
-2. **Phase 10 — Testing & Validation** (recommended):
-   - Unit test untuk StockForecastService, PredictionService, OrderService
-   - Feature test untuk POS checkout, stock deduction
-   - Integration test untuk Laravel↔Python
-   - Regression checklist per TESTING_STRATEGY.md
+2. **Demo Scenario** (recommended, 30 menit):
+   - Skenario 5-10 menit untuk sidang
+   - `docs/DEMO_SCENARIO.md` — script step-by-step:
+     1. Login Owner
+     2. Cek dashboard (KPI, trend, top products)
+     3. Buka POS, transaksi → struk
+     4. Lihat stok turun otomatis (movement)
+     5. Cek dataset + ANN models (sudah trained)
+     6. Generate predictions + forecast
+     7. Buat PO dari recommendation
+     8. Lihat laporan (sales, inventory, purchasing)
+3. **Testing minimal** (optional, 1-2 jam):
+   - 5-10 unit test untuk service critical
+   - Smoke test manual checklist
 
-3. **Phase 11 — Deployment & Documentation** (recommended untuk production):
-   - Production server setup
-   - Database upgrade (MariaDB 10.11 LTS)
-   - Backup & monitoring
-   - User manual untuk staff coffee shop
+4. **Phase 11 Deployment** (skip kalau demo lokal):
+   - Local demo cukup untuk sidang
+   - Production deployment hanya kalau diminta dosen
 
-**Rekomendasi skripsi:** Fokus Phase 10 (testing minimal) + dokumentasi untuk sidang. Phase 9 dan 11 bisa disingkat sesuai waktu.
+**Rekomendasi saya:** skip Phase 10 otomatis, fokus:
+
+- **User Manual** + **Demo Scenario** (2 jam)
+- Smoke test manual (30 menit, cek 8 fitur utama jalan)
+- **Siap sidang**
 
 ---
 
@@ -610,7 +639,8 @@ Setiap perubahan progress harus memenuhi ketentuan:
 | 2026-11-14 | Phase 6 completed: weather integration (Open-Meteo adapter, hourly → business-date aggregation, idempotent manual sync), dataset generation (feature engineering with lags + rolling, versioned snapshot, immutable records)                                     |
 | 2026-11-17 | Phase 7 completed: Python ANN pipeline (async training + prediction endpoints), Laravel integration (schema 4 tables, AnnServiceClient, AnnTrainingService), UI (model list + detail, training history, activate/archive, train button, refresh status recovery) |
 | 2026-11-17 | Phase 8 completed: safety stock + ROP calculation (30-day rolling), ANN prediction integration into forecast (predicted demand drives ROP), PO pre-fill from recommendation (checkbox selection + qty auto-fill)                                                 |
+| 2026-11-17 | Phase 9 partial: sidebar cleanup + dashboard with real KPIs, 7-day trend chart, top products, recent orders, low stock alerts, purchase recommendations                                                                                                          |
 
 ---
 
-**Current Overall Status: PHASE 8 COMPLETE — SKRIPSI ALUR UTAMA SELESAI**
+**Current Overall Status: PHASE 9 PARTIAL — SKRIPSI DEMO READY**
