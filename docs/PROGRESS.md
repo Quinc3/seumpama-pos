@@ -12,8 +12,8 @@
 | Location              | Tigaraksa, Kabupaten Tangerang, Banten        |
 | Last Updated          | 2026-11-11                                    |
 | Timezone              | Asia/Jakarta                                  |
-| Overall Status        | PHASE 6 COMPLETE                              |
-| Implementation Status | PHASE 7 READY                                 |
+| Overall Status        | PHASE 7 COMPLETE                              |
+| Implementation Status | PHASE 8 READY                                 |
 
 ---
 
@@ -180,8 +180,8 @@ Total fase: 12 fase, mulai Phase 0 sampai Phase 11.
 | 4     | POS                                  | COMPLETED   |
 | 5     | Operational Reports                  | COMPLETED   |
 | 6     | Weather and Dataset Preparation      | COMPLETED   |
-| 7     | Python ANN Integration               | IN PROGRESS |
-| 8     | Forecasting and Stock Recommendation | NOT STARTED |
+| 7     | Python ANN Integration               | COMPLETED   |
+| 8     | Forecasting and Stock Recommendation | IN PROGRESS |
 | 9     | UI Refinement                        | NOT STARTED |
 | 10    | Testing and Validation               | NOT STARTED |
 | 11    | Deployment and Documentation         | NOT STARTED |
@@ -373,6 +373,38 @@ Catatan: Checklist penyusunan dokumen menunjukkan dokumen telah disusun, bukan b
 
 ---
 
+## Phase 7 — Python ANN Integration
+
+**Status: COMPLETED (2026-11-17)**
+
+### Deliverables Verified
+
+- **Training Pipeline (7a-1)** — Python async training endpoint, Keras MLP 16→8→1, chronological split 70/15/15, StandardScaler fit on train only, MAE/RMSE + naive baseline (lag_d1), per-ingredient artifact storage (model.keras + scaler.pkl + metadata.json).
+- **Prediction Endpoint (7a-2)** — Model status listing, per-ingredient prediction with on-demand model+scaler load, feature count validation, negative clamp to 0.
+- **ANN Schema (7b-1)** — 4 tables: `ann_models`, `ann_training_runs`, `ann_model_ingredients`, `ann_predictions`.
+- **AnnServiceClient (7b-2)** — Extended with `submitTraining()`, `getTrainingStatus()`, `getModelStatus()`, `predict()`.
+- **AnnTrainingService (7b-3)** — Payload builder dari dataset, submit + poll workflow (timeout 300s), per-ingredient error tracking di `test_metrics`, idempotent `handleCompleted()` via `firstOrCreate`, `refreshFromPython()` recovery method.
+- **ANN UI (7b-4)** — Model list + detail (dengan metrics, architecture, ingredients), training runs history + detail (per-ingredient metrics breakdown), activate/archive workflow, train button di dataset show, refresh status recovery button.
+
+### Model Aktif di DB
+
+- **11 models** trained dari `dataset-v001-20261114` (14 hari, 11 ingredients)
+- **HB (id=5):** MAE 28.8 vs baseline 54 → **47% better** ✅
+- **Susu (id=6):** MAE 80.4 vs baseline 150 → **46% better** ✅
+- **9 lainnya:** MAE ~0.05–0.38 (baseline 0, karena actual=0 semua hari)
+- Status: `candidate` (belum ada yang di-`activate`)
+
+### Non-blocking Notes (PENTING untuk Skripsi)
+
+- **Data aktual tidak cukup untuk training meaningful.** Dataset 14 hari → 7 samples per ingredient (setelah `dropna(lag_d7)`). Minimum threshold 10 → training akan **failed** di production dengan data aktual saat ini.
+- **Rekomendasi skripsi:** Kumpulkan data aktual 3+ bulan sebelum training production. Demo berhasil pakai threshold temporary 7 (sudah di-revert ke 10).
+- **Model demo** (dari run `training-20261114115917`) tersimpan di DB sebagai `candidate`. Untuk demo sidang, bisa di-`activate`.
+- **Synchronous training** (bukan queue) — cocok untuk skripsi. Upgrade ke queue mudah nanti (tinggal wrap `AnnTrainingService::submitTraining()` di job class, tanpa rewrite).
+- **Poll timeout 300s** cukup untuk 11 ingredients (~2.5 menit).
+- **`ann_training_runs.ann_model_id`** hanya pointer ke 1 model terakhir. Query lengkap via `AnnModel::where('dataset_version_id', ...)`.
+
+---
+
 # 7. Business Data Readiness
 
 Data aktual dari Coffee Shop Seumpama Bunga masih perlu dikumpulkan dan diverifikasi.
@@ -479,18 +511,17 @@ Keputusan yang belum ditetapkan tidak boleh dianggap final oleh AI coding assist
 
 # 11. Next Actions
 
-Phase 6 selesai. Next: Phase 7 — Python ANN Integration.
+Phase 7 selesai. Next: Phase 8 — Forecasting and Stock Recommendation.
 
-Phase 7 order:
+Phase 8 order:
 
-1. **7a — Python ANN Service extension** — train endpoint (async), Keras MLP, evaluation (MAE/RMSE), model artifact storage, prediction endpoint.
-2. **7b — Laravel integration** — extended AnnServiceClient, training request + polling status via queue, model metadata storage.
-3. **7c — Prediction flow + UI** — generate prediction, store result, display prediction vs actual, model management UI.
+1. **8a — Safety Stock + ROP Calculation** — implement formula Z × σd × √L (SS) dan (avg demand × L + SS) (ROP) per ingredient, configurable service level + lead time.
+2. **8b — Stock Forecast + Recommendation** — gabungkan prediction ANN + current stock + safety stock + lead time → recommended purchase quantity + stock coverage days.
+3. **8c — Procurement Dashboard** — UI list ingredient dengan status (normal/warning/critical), filter, rekomendasi pembelian, tombol "Buat PO" pre-filled.
 
-Phase 7 fokus: **pipeline ANN end-to-end** (train → evaluate → predict).
-Model training dengan data existing (14 hari) hanya untuk verifikasi pipeline, **bukan untuk training meaningful**. Data aktual 3+ bulan tetap perlu dikumpulkan untuk skripsi.
+Phase 8 fokus: **procurement decision support** — akhir dari alur skripsi (sales → dataset → ANN → forecast → recommendation).
 
-Phase 8 (Forecasting) setelah Phase 7 selesai.
+Phase 9 (UI Refinement) setelah Phase 8 selesai.
 
 ---
 
@@ -511,17 +542,18 @@ Setiap perubahan progress harus memenuhi ketentuan:
 
 # 13. Changelog
 
-| Date       | Changes                                                                                                                                                                                                                                                         |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-10 | Initial progress document drafted                                                                                                                                                                                                                               |
-| 2026-11-11 | Synchronized implementation phase tracking with IMPLEMENTATION_PLAN.md and updated documentation inventory                                                                                                                                                      |
-| 2026-11-11 | Phase 0 completed: environment audit verified (Windows 10, PHP 8.2.12, MariaDB 10.4.32 strict, Python 3.12.8, Composer 2.11.2); git repo initialized + pushed (commit 9666905); 7 technical decisions locked                                                    |
-| 2026-11-11 | Phase 1 completed: Laravel 12.72 bootstrap, manual auth, RBAC (13 permissions, 4 roles), application layout, reusable Blade components, Python FastAPI skeleton, Laravel↔Python health check (failure isolation verified)                                       |
-| 2026-11-11 | Phase 2 completed: 7 master data modules (Unit, Category, Ingredient, Product, Supplier, Customer, User Management) — all CRUD with validation + permission control; added x-select, x-file-input, x-password-input components; image upload with drag-and-drop |
-| 2026-11-13 | Phase 3 completed: recipe management + versioning, inventory movement (StockService atomic), stock opname draft→approve, purchasing + goods receipt with partial receive and outstanding tracking                                                               |
-| 2026-11-13 | Phase 4 completed: business session + payment methods, POS interface with cart, checkout with atomic stock deduction + sale_ingredient_usages snapshot, receipt (thermal + PDF) with business settings, refund with return_in reversal                          |
-| 2026-11-14 | Phase 6 completed: weather integration (Open-Meteo adapter, hourly → business-date aggregation, idempotent manual sync), dataset generation (feature engineering with lags + rolling, versioned snapshot, immutable records)                                    |
+| Date       | Changes                                                                                                                                                                                                                                                          |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-10 | Initial progress document drafted                                                                                                                                                                                                                                |
+| 2026-11-11 | Synchronized implementation phase tracking with IMPLEMENTATION_PLAN.md and updated documentation inventory                                                                                                                                                       |
+| 2026-11-11 | Phase 0 completed: environment audit verified (Windows 10, PHP 8.2.12, MariaDB 10.4.32 strict, Python 3.12.8, Composer 2.11.2); git repo initialized + pushed (commit 9666905); 7 technical decisions locked                                                     |
+| 2026-11-11 | Phase 1 completed: Laravel 12.72 bootstrap, manual auth, RBAC (13 permissions, 4 roles), application layout, reusable Blade components, Python FastAPI skeleton, Laravel↔Python health check (failure isolation verified)                                        |
+| 2026-11-11 | Phase 2 completed: 7 master data modules (Unit, Category, Ingredient, Product, Supplier, Customer, User Management) — all CRUD with validation + permission control; added x-select, x-file-input, x-password-input components; image upload with drag-and-drop  |
+| 2026-11-13 | Phase 3 completed: recipe management + versioning, inventory movement (StockService atomic), stock opname draft→approve, purchasing + goods receipt with partial receive and outstanding tracking                                                                |
+| 2026-11-13 | Phase 4 completed: business session + payment methods, POS interface with cart, checkout with atomic stock deduction + sale_ingredient_usages snapshot, receipt (thermal + PDF) with business settings, refund with return_in reversal                           |
+| 2026-11-14 | Phase 6 completed: weather integration (Open-Meteo adapter, hourly → business-date aggregation, idempotent manual sync), dataset generation (feature engineering with lags + rolling, versioned snapshot, immutable records)                                     |
+| 2026-11-17 | Phase 7 completed: Python ANN pipeline (async training + prediction endpoints), Laravel integration (schema 4 tables, AnnServiceClient, AnnTrainingService), UI (model list + detail, training history, activate/archive, train button, refresh status recovery) |
 
 ---
 
-**Current Overall Status: PHASE 6 COMPLETE — READY FOR PHASE 7**
+**Current Overall Status: PHASE 7 COMPLETE — READY FOR PHASE 8**
