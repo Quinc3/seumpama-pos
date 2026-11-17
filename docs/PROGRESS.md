@@ -12,8 +12,8 @@
 | Location              | Tigaraksa, Kabupaten Tangerang, Banten        |
 | Last Updated          | 2026-11-11                                    |
 | Timezone              | Asia/Jakarta                                  |
-| Overall Status        | PHASE 7 COMPLETE                              |
-| Implementation Status | PHASE 8 READY                                 |
+| Overall Status        | PHASE 8 COMPLETE                              |
+| Implementation Status | PHASE 9 READY (optional)                      |
 
 ---
 
@@ -181,8 +181,8 @@ Total fase: 12 fase, mulai Phase 0 sampai Phase 11.
 | 5     | Operational Reports                  | COMPLETED   |
 | 6     | Weather and Dataset Preparation      | COMPLETED   |
 | 7     | Python ANN Integration               | COMPLETED   |
-| 8     | Forecasting and Stock Recommendation | IN PROGRESS |
-| 9     | UI Refinement                        | NOT STARTED |
+| 8     | Forecasting and Stock Recommendation | COMPLETED   |
+| 9     | UI Refinement                        | OPTIONAL    |
 | 10    | Testing and Validation               | NOT STARTED |
 | 11    | Deployment and Documentation         | NOT STARTED |
 
@@ -405,6 +405,50 @@ Catatan: Checklist penyusunan dokumen menunjukkan dokumen telah disusun, bukan b
 
 ---
 
+## Phase 8 — Forecasting and Stock Recommendation
+
+**Status: COMPLETED (2026-11-17)**
+
+### Deliverables Verified
+
+- **Safety Stock + ROP (8a)** — `StockForecastService` dengan formula Z×σd×√L, historical stats 30-day rolling window (0-fill untuk hari tanpa transaksi), service level 95% (Z=1.6449), generate per ingredient, snapshot history.
+- **ANN Prediction Integration (8b)** — `PredictionService`: panggil Python `/predictions/demand` untuk 11 ingredients, build features dari historical actuals (lag_d1..d7, rolling, weather last-known), store ke `ann_predictions` dengan idempotent `updateOrCreate`.
+- **Forecast Uses Prediction (8b)** — `ROP = (predicted ?? historical_avg) × L + SS`. Fallback ke historical avg kalau prediction tidak tersedia.
+- **PO Pre-fill (8c)** — Checkbox selection di `/stock-forecasts` (hanya untuk rec > 0), counter dengan total quantity, button disabled saat 0 dipilih, redirect ke `/purchase-orders/create?from_forecast[]=...` dengan ingredient + qty pre-filled.
+
+### Test Results (8/8 PASS)
+
+1. Predictions generated 11/11 ✅
+2. Forecast regenerate works (HB warning/critical saat low stock) ✅
+3. Checkbox conditional (HB aktif, others disabled) ✅
+4. Button disabled saat 0 dipilih ✅
+5. Counter text "1 dipilih • total X,XX" ✅
+6. Pre-fill redirect dengan HB + qty ✅
+7. Submit PO dengan qty = rec ✅
+8. Multi-select 2 items → 2 rows pre-filled ✅
+
+### Formula Terverifikasi
+
+**Safety Stock** = Z × σd × √L (Z = 1.6449 untuk 95%)
+**Reorder Point** = Demand × L + SS (Demand = prediction || historical avg)
+**Recommended Purchase** = max(0, ROP − Current Stock)
+
+**Contoh (HB Espresso dengan data 14 hari):**
+
+- avg = 1.80 g/day, σd = 9.69, L = 3 hari
+- SS = 1.6449 × 9.69 × √3 = 27.62
+- ROP = 1.80 × 3 + 27.62 = 33.02
+- Verified matematis ✅
+
+### Non-blocking Notes (untuk Skripsi)
+
+- **Prediction values bervariasi liar** (0-100+) karena model overfit pada 7 samples. Pipeline matematis benar + traceable, tapi nilai aktual memerlukan data 3+ bulan untuk akurasi operasional.
+- **Weather forecast real** belum diimplementasi — forecast feature pakai "last known weather summary" (bukan actual forecast untuk target_date). Catat sebagai future enhancement.
+- **Trigger prediction/forecast** masih manual via tombol. Auto-cron bisa ditambahkan di Phase 9/11.
+- **PO pre-fill** hanya mengisi ingredient + qty; user tetap isi harga satuan & supplier manual.
+
+---
+
 # 7. Business Data Readiness
 
 Data aktual dari Coffee Shop Seumpama Bunga masih perlu dikumpulkan dan diverifikasi.
@@ -511,17 +555,29 @@ Keputusan yang belum ditetapkan tidak boleh dianggap final oleh AI coding assist
 
 # 11. Next Actions
 
-Phase 7 selesai. Next: Phase 8 — Forecasting and Stock Recommendation.
+Phase 8 selesai. **ALUR SKRIPSI COMPLETE** — sales → dataset → ANN training → ANN prediction → safety stock → ROP → procurement recommendation → PO.
 
-Phase 8 order:
+Phase 9-11 (optional untuk skripsi):
 
-1. **8a — Safety Stock + ROP Calculation** — implement formula Z × σd × √L (SS) dan (avg demand × L + SS) (ROP) per ingredient, configurable service level + lead time.
-2. **8b — Stock Forecast + Recommendation** — gabungkan prediction ANN + current stock + safety stock + lead time → recommended purchase quantity + stock coverage days.
-3. **8c — Procurement Dashboard** — UI list ingredient dengan status (normal/warning/critical), filter, rekomendasi pembelian, tombol "Buat PO" pre-filled.
+1. **Phase 9 — UI Refinement** (optional):
+   - Konsistensi visual antar halaman
+   - Chart visualization (Chart.js) untuk sales trend, prediction vs actual
+   - Loading state / empty state polish
+   - Bisa skip kalau UI sudah cukup untuk sidang
 
-Phase 8 fokus: **procurement decision support** — akhir dari alur skripsi (sales → dataset → ANN → forecast → recommendation).
+2. **Phase 10 — Testing & Validation** (recommended):
+   - Unit test untuk StockForecastService, PredictionService, OrderService
+   - Feature test untuk POS checkout, stock deduction
+   - Integration test untuk Laravel↔Python
+   - Regression checklist per TESTING_STRATEGY.md
 
-Phase 9 (UI Refinement) setelah Phase 8 selesai.
+3. **Phase 11 — Deployment & Documentation** (recommended untuk production):
+   - Production server setup
+   - Database upgrade (MariaDB 10.11 LTS)
+   - Backup & monitoring
+   - User manual untuk staff coffee shop
+
+**Rekomendasi skripsi:** Fokus Phase 10 (testing minimal) + dokumentasi untuk sidang. Phase 9 dan 11 bisa disingkat sesuai waktu.
 
 ---
 
@@ -553,6 +609,7 @@ Setiap perubahan progress harus memenuhi ketentuan:
 | 2026-11-13 | Phase 4 completed: business session + payment methods, POS interface with cart, checkout with atomic stock deduction + sale_ingredient_usages snapshot, receipt (thermal + PDF) with business settings, refund with return_in reversal                           |
 | 2026-11-14 | Phase 6 completed: weather integration (Open-Meteo adapter, hourly → business-date aggregation, idempotent manual sync), dataset generation (feature engineering with lags + rolling, versioned snapshot, immutable records)                                     |
 | 2026-11-17 | Phase 7 completed: Python ANN pipeline (async training + prediction endpoints), Laravel integration (schema 4 tables, AnnServiceClient, AnnTrainingService), UI (model list + detail, training history, activate/archive, train button, refresh status recovery) |
+| 2026-11-17 | Phase 8 completed: safety stock + ROP calculation (30-day rolling), ANN prediction integration into forecast (predicted demand drives ROP), PO pre-fill from recommendation (checkbox selection + qty auto-fill)                                                 |
 
 ---
 
