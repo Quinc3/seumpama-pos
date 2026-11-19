@@ -10,7 +10,7 @@
 </head>
 
 <body class="h-full bg-slate-100 text-slate-900 antialiased"
-    x-data="posApp({{ Js::from($cartData) }}, {{ Js::from($productsPayload) }}, {{ Js::from($paymentMethods) }})">
+    x-data="posApp({{ Js::from($cartData) }}, {{ Js::from($productsPayload) }}, {{ Js::from($paymentMethods) }}, {{ Js::from($activePromotions) }})">
 
     {{-- Topbar --}}
     <header class="h-14 bg-white border-b border-slate-200 flex items-center px-4 gap-4">
@@ -224,13 +224,40 @@
                     <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700" x-text="checkoutError"></div>
                 </template>
 
-                {{-- Total --}}
-                <div class="p-4 bg-slate-50 rounded-lg">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-slate-600">Total</span>
-                        <span class="text-2xl font-bold text-slate-900 font-mono" x-text="'Rp ' + fmt(cart.subtotal)"></span>
+                {{-- Subtotal + Promotion --}}
+                <div class="p-4 bg-slate-50 rounded-lg space-y-2">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-600">Subtotal</span>
+                        <span class="font-mono text-slate-900" x-text="'Rp ' + fmt(cart.subtotal)"></span>
                     </div>
-                    <div class="text-xs text-slate-500 mt-1">
+
+                    {{-- Promotion dropdown --}}
+                    <template x-if="applicablePromotions.length > 0">
+                        <div class="pt-2 border-t border-slate-200">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Promosi</label>
+                            <select x-model="selectedPromotionId"
+                                @change="if (selectedPaymentMethod?.code !== 'cash') amountPaid = String(totalAfterDiscount)"
+                                class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white">
+                                <option value="">— Tanpa Promosi —</option>
+                                <template x-for="p in applicablePromotions" :key="p.id">
+                                    <option :value="p.id" x-text="p.name + (p.code ? ' (' + p.code + ')' : '')"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </template>
+
+                    <template x-if="selectedPromotion">
+                        <div class="flex justify-between items-center text-sm text-green-700 pt-1">
+                            <span>Diskon (<span x-text="selectedPromotion.name"></span>)</span>
+                            <span class="font-mono font-medium" x-text="'- Rp ' + fmt(discountAmount)"></span>
+                        </div>
+                    </template>
+
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+                        <span class="text-sm font-medium text-slate-700">Total</span>
+                        <span class="text-2xl font-bold text-slate-900 font-mono" x-text="'Rp ' + fmt(totalAfterDiscount)"></span>
+                    </div>
+                    <div class="text-xs text-slate-500">
                         <span x-text="cart.item_count"></span> item
                     </div>
                 </div>
@@ -240,7 +267,7 @@
                     <label class="block text-sm font-medium text-slate-700 mb-2">Metode Pembayaran</label>
                     <div class="grid grid-cols-3 gap-2">
                         <template x-for="m in paymentMethods" :key="m.id">
-                            <button type="button" @click="paymentMethodId = m.id; amountPaid = (m.code !== 'cash' ? String(cart.subtotal) : '')"
+                            <button type="button" @click="paymentMethodId = m.id; amountPaid = (m.code !== 'cash' ? String(totalAfterDiscount) : '')"
                                 :class="paymentMethodId === m.id ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'"
                                 class="px-3 py-2 rounded-lg border text-sm font-medium transition-colors">
                                 <span x-text="m.name"></span>
@@ -255,7 +282,7 @@
                         Jumlah Dibayar <span class="text-red-500">*</span>
                     </label>
                     <input type="number" step="any" min="0" x-model="amountPaid"
-                        :placeholder="selectedPaymentMethod?.code === 'cash' ? 'Masukkan jumlah uang' : String(cart.subtotal)"
+                        :placeholder="selectedPaymentMethod?.code === 'cash' ? 'Masukkan jumlah uang' : String(totalAfterDiscount)"
                         class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-lg font-mono text-right focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <p class="text-xs text-slate-500 mt-1" x-show="selectedPaymentMethod?.code === 'cash'">
                         Cash: boleh lebih (ada kembalian)
@@ -266,18 +293,18 @@
                 </div>
 
                 {{-- Inline validation warning --}}
-                <template x-if="selectedPaymentMethod && selectedPaymentMethod.code !== 'cash' && amountPaid !== '' && Math.abs((parseFloat(amountPaid) || 0) - cart.subtotal) > 0.01">
+                <template x-if="selectedPaymentMethod && selectedPaymentMethod.code !== 'cash' && amountPaid !== '' && Math.abs((parseFloat(amountPaid) || 0) - totalAfterDiscount) > 0.01">
                     <div class="p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-                        <template x-if="(parseFloat(amountPaid) || 0) > cart.subtotal + 0.01">
+                        <template x-if="(parseFloat(amountPaid) || 0) > totalAfterDiscount + 0.01">
                             <span>
                                 <strong>Metode <span x-text="selectedPaymentMethod.name"></span> tidak menerima kelebihan bayar.</strong>
-                                Ubah jumlah menjadi tepat <strong x-text="'Rp ' + fmt(cart.subtotal)"></strong>, atau ganti metode ke Cash.
+                                Ubah jumlah menjadi tepat <strong x-text="'Rp ' + fmt(totalAfterDiscount)"></strong>, atau ganti metode ke Cash.
                             </span>
                         </template>
-                        <template x-if="(parseFloat(amountPaid) || 0) < cart.subtotal - 0.01">
+                        <template x-if="(parseFloat(amountPaid) || 0) < totalAfterDiscount - 0.01">
                             <span>
                                 <strong>Pembayaran kurang.</strong>
-                                Butuh <strong x-text="'Rp ' + fmt(cart.subtotal)"></strong>.
+                                Butuh <strong x-text="'Rp ' + fmt(totalAfterDiscount)"></strong>.
                             </span>
                         </template>
                     </div>
@@ -328,11 +355,12 @@
     </div>
 
     <script>
-        function posApp(initialCart, products, paymentMethods) {
+        function posApp(initialCart, products, paymentMethods, activePromotions) {
             return {
                 cart: initialCart,
                 products: products,
                 paymentMethods: paymentMethods,
+                activePromotions: activePromotions,
                 search: '',
                 categoryFilter: null,
                 loading: false,
@@ -340,6 +368,7 @@
                 checkoutOpen: false,
                 checkoutError: null,
                 paymentMethodId: paymentMethods.length > 0 ? paymentMethods[0].id : null,
+                selectedPromotionId: null,
                 amountPaid: '',
                 paymentReference: '',
                 orderNotes: '',
@@ -350,15 +379,49 @@
 
                 get change() {
                     const paid = parseFloat(this.amountPaid) || 0;
-                    const change = paid - this.cart.subtotal;
+                    const change = paid - this.totalAfterDiscount;
                     return change > 0 ? change : 0;
+                },
+
+                get applicablePromotions() {
+                    if (this.cart.items.length === 0) return [];
+                    const cartProductIds = this.cart.items.map(i => i.product_id);
+                    return this.activePromotions.filter(p => {
+                        if (p.minimum_purchase && this.cart.subtotal < p.minimum_purchase) return false;
+                        if (p.product_ids.length > 0 && !p.product_ids.some(pid => cartProductIds.includes(pid))) return false;
+                        return true;
+                    });
+                },
+
+                get selectedPromotion() {
+                    return this.activePromotions.find(p => p.id == this.selectedPromotionId) || null;
+                },
+
+                get discountAmount() {
+                    const p = this.selectedPromotion;
+                    if (!p) return 0;
+                    const subtotal = this.cart.subtotal;
+                    if (p.minimum_purchase && subtotal < p.minimum_purchase) return 0;
+                    let d = 0;
+                    if (p.discount_type === 'percentage') {
+                        d = subtotal * (p.discount_value / 100);
+                        if (p.maximum_discount) d = Math.min(d, p.maximum_discount);
+                    } else {
+                        d = p.discount_value;
+                    }
+                    return Math.min(d, subtotal);
+                },
+
+                get totalAfterDiscount() {
+                    return Math.max(0, this.cart.subtotal - this.discountAmount);
                 },
 
                 get canCheckout() {
                     if (this.cart.item_count === 0) return false;
                     const paid = parseFloat(this.amountPaid) || 0;
-                    if (paid < this.cart.subtotal - 0.01) return false;
-                    if (this.selectedPaymentMethod?.code !== 'cash' && Math.abs(paid - this.cart.subtotal) > 0.01) return false;
+                    const total = this.totalAfterDiscount;
+                    if (paid < total - 0.01) return false;
+                    if (this.selectedPaymentMethod?.code !== 'cash' && Math.abs(paid - total) > 0.01) return false;
                     return true;
                 },
 
@@ -406,6 +469,7 @@
                             }),
                         });
                         this.cart = data.cart;
+                        this.selectedPromotionId = null;
                     } catch (e) {
                         this.error = e.message;
                     } finally {
@@ -426,6 +490,7 @@
                             }),
                         });
                         this.cart = data.cart;
+                        this.selectedPromotionId = null;
                     } catch (e) {
                         this.error = e.message;
                     } finally {
@@ -442,6 +507,7 @@
                             method: 'DELETE',
                         });
                         this.cart = data.cart;
+                        this.selectedPromotionId = null;
                     } catch (e) {
                         this.error = e.message;
                     } finally {
@@ -459,6 +525,7 @@
                             method: 'POST',
                         });
                         this.cart = data.cart;
+                        this.selectedPromotionId = null;
                     } catch (e) {
                         this.error = e.message;
                     } finally {
@@ -478,6 +545,7 @@
                                 amount_paid: parseFloat(this.amountPaid),
                                 payment_reference: this.paymentReference || null,
                                 notes: this.orderNotes || null,
+                                promotion_id: this.selectedPromotionId || null,
                             }),
                         });
                         if (data.success && data.redirect_url) {

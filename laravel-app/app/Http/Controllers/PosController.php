@@ -44,12 +44,30 @@ class PosController extends Controller
             ->values()
             ->toArray();
 
+        $activePromotions = \App\Models\Promotion::active()
+            ->with('products:id')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'code' => $p->code,
+                'discount_type' => $p->discount_type,
+                'discount_value' => (float) $p->discount_value,
+                'minimum_purchase' => $p->minimum_purchase !== null ? (float) $p->minimum_purchase : null,
+                'maximum_discount' => $p->maximum_discount !== null ? (float) $p->maximum_discount : null,
+                'product_ids' => $p->products->pluck('id')->toArray(),
+            ])
+            ->values()
+            ->toArray();
+
         return view('pos.index', [
             'session' => $session,
             'cartData' => $cart->toCartArray(),
             'productsPayload' => $productsPayload,
             'categories' => $categories,
             'paymentMethods' => $paymentMethods,
+            'activePromotions' => $activePromotions,
         ]);
     }
 
@@ -142,6 +160,7 @@ class PosController extends Controller
             'amount_paid' => ['required', 'numeric', 'min:0'],
             'payment_reference' => ['nullable', 'string', 'max:150'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
         ]);
 
         try {
@@ -151,6 +170,7 @@ class PosController extends Controller
                 (float) $data['amount_paid'],
                 $data['payment_reference'] ?? null,
                 $data['notes'] ?? null,
+                $data['promotion_id'] ?? null,
             );
 
             return response()->json([

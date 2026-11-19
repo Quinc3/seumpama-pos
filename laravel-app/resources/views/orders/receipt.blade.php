@@ -154,6 +154,13 @@
             <span>-Rp {{ number_format((float) $order->discount_amount, 0, ',', '.') }}</span>
         </div>
         @endif
+
+        @if ($order->promotion)
+        <div class="total-row" style="font-size: 10px;">
+            <span>Promo</span>
+            <span>{{ $order->promotion->promotion_name }}</span>
+        </div>
+        @endif
         <div class="total-row grand-total" style="margin-top: 4px;">
             <span>TOTAL</span>
             <span>Rp {{ number_format((float) $order->total_amount, 0, ',', '.') }}</span>

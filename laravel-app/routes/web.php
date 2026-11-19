@@ -90,6 +90,12 @@ Route::middleware(['auth'])->group(function () {
             ->name('products.destroy');
     });
 
+    // ============ PROMOTIONS ============
+    Route::middleware('permission:products.manage')->group(function () {
+        Route::resource('promotions', \App\Http\Controllers\PromotionController::class)
+            ->except(['show']);
+    });
+
     // ============ SUPPLIERS ============
     Route::middleware('permission:inventory.view')->group(function () {
         Route::get('suppliers', [\App\Http\Controllers\SupplierController::class, 'index'])
@@ -139,6 +145,14 @@ Route::middleware(['auth'])->group(function () {
             ->whereNumber('user')->name('users.update');
         Route::delete('users/{user}', [\App\Http\Controllers\UserController::class, 'destroy'])
             ->whereNumber('user')->name('users.destroy');
+    });
+
+    // ============ SETTINGS ============
+    Route::middleware('permission:settings.manage')->group(function () {
+        Route::get('settings', [\App\Http\Controllers\SettingsController::class, 'index'])
+            ->name('settings.index');
+        Route::put('settings', [\App\Http\Controllers\SettingsController::class, 'update'])
+            ->name('settings.update');
     });
 
     // ============ RECIPES ============

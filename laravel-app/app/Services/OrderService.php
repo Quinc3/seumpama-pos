@@ -35,7 +35,8 @@ class OrderService
         int $paymentMethodId,
         float $amountPaid,
         ?string $paymentReference = null,
-        ?string $orderNotes = null
+        ?string $orderNotes = null,
+        ?int $promotionId = null
     ): Order {
         $cart->load('items.product.recipe.items.ingredient.unit');
 
@@ -85,8 +86,32 @@ class OrderService
             ];
         }
 
+        // Promosi (opsional)
+        $appliedPromotion = null;
+        $discountAmount = 0.0;
+
+        if ($promotionId !== null) {
+            $promotion = \App\Models\Promotion::with('products')->find($promotionId);
+
+            if (! $promotion || ! $promotion->isCurrentlyActive()) {
+                throw new InvalidArgumentException('Promosi tidak aktif atau tidak ditemukan.');
+            }
+
+            // Kalau ada restricted products, cart harus punya minimal 1 match
+            if ($promotion->products->isNotEmpty()) {
+                $cartProductIds = collect($preparedItems)->pluck('product.id')->all();
+                $promoProductIds = $promotion->products->pluck('id')->all();
+                if (empty(array_intersect($cartProductIds, $promoProductIds))) {
+                    throw new InvalidArgumentException('Cart tidak memiliki produk yang memenuhi syarat promosi.');
+                }
+            }
+
+            $discountAmount = $promotion->calculateDiscount($subtotal);
+            $appliedPromotion = $promotion;
+        }
+
         // Validasi pembayaran
-        $total = $subtotal; // No discount/tax in v1
+        $total = $subtotal - $discountAmount;
         if ($amountPaid < $total - 0.01) {
             throw new InvalidArgumentException(
                 "Pembayaran kurang. Total: Rp " . number_format($total, 0, ',', '.') .
@@ -112,7 +137,9 @@ class OrderService
             $paymentMethod,
             $amountPaid,
             $paymentReference,
-            $orderNotes
+            $orderNotes,
+            $discountAmount,
+            $appliedPromotion,
         ) {
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
@@ -120,7 +147,7 @@ class OrderService
                 'user_id' => auth()->id(),
                 'customer_id' => null,
                 'subtotal' => $subtotal,
-                'discount_amount' => 0,
+                'discount_amount' => $discountAmount,
                 'tax_amount' => 0,
                 'total_amount' => $total,
                 'status' => 'paid',
@@ -174,6 +201,18 @@ class OrderService
                         ]
                     );
                 }
+            }
+
+            // Snapshot promosi
+            if ($appliedPromotion) {
+                \App\Models\OrderPromotion::create([
+                    'order_id' => $order->id,
+                    'promotion_id' => $appliedPromotion->id,
+                    'promotion_name' => $appliedPromotion->name,
+                    'discount_type' => $appliedPromotion->discount_type,
+                    'discount_value' => $appliedPromotion->discount_value,
+                    'discount_amount' => $discountAmount,
+                ]);
             }
 
             // Payment

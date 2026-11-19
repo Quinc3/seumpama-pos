@@ -73,4 +73,9 @@ class Order extends Model
 
         return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
+
+    public function promotion(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(OrderPromotion::class);
+    }
 }
