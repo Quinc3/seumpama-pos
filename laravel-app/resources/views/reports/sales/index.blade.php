@@ -204,6 +204,62 @@
         @endif
     </x-card>
 
+    {{-- Promo Section --}}
+    <x-card title="Penjualan dengan Promo" subtitle="Breakdown per promo yang digunakan" class="mb-4 mt-4">
+        @if ($promoBreakdown->isEmpty())
+        <p class="text-sm text-slate-500 text-center py-6">Belum ada transaksi dengan promo di periode ini.</p>
+        @else
+        {{-- KPI Promo --}}
+        <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="p-3 bg-blue-50 rounded-lg">
+                <p class="text-xs text-blue-700">Transaksi dengan Promo</p>
+                <p class="text-xl font-bold text-blue-900 font-mono mt-1">{{ number_format($promoStats['tx_count']) }}</p>
+                <p class="text-xs text-blue-600 mt-0.5">{{ $promoStats['pct_of_transactions'] }}% dari total</p>
+            </div>
+            <div class="p-3 bg-green-50 rounded-lg">
+                <p class="text-xs text-green-700">Total Diskon Diberikan</p>
+                <p class="text-xl font-bold text-green-900 font-mono mt-1">
+                    Rp {{ number_format($promoStats['total_discount'], 0, ',', '.') }}
+                </p>
+            </div>
+            <div class="p-3 bg-amber-50 rounded-lg">
+                <p class="text-xs text-amber-700">Revenue dengan Promo</p>
+                <p class="text-xl font-bold text-amber-900 font-mono mt-1">
+                    Rp {{ number_format($promoStats['total_revenue'], 0, ',', '.') }}
+                </p>
+            </div>
+        </div>
+
+        {{-- Breakdown Table --}}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="text-xs text-slate-500 border-b border-slate-200">
+                    <tr>
+                        <th class="text-left py-2">Promo</th>
+                        <th class="text-right py-2">Transaksi</th>
+                        <th class="text-right py-2">Total Diskon</th>
+                        <th class="text-right py-2">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach ($promoBreakdown as $p)
+                    <tr>
+                        <td class="py-2 font-medium text-slate-900">{{ $p->promotion_name }}</td>
+                        <td class="py-2 text-right font-mono text-slate-700">{{ number_format($p->tx_count) }}</td>
+                        <td class="py-2 text-right font-mono text-green-700 font-medium">
+                            - Rp {{ number_format((float) $p->total_discount, 0, ',', '.') }}
+                        </td>
+                        <td class="py-2 text-right font-mono text-slate-900">
+                            Rp {{ number_format((float) $p->total_revenue, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
+    </x-card>
+
     {{-- Recent Transactions --}}
     <x-card title="Transaksi Terbaru" subtitle="20 transaksi terakhir pada periode ini">
         @if ($recentOrders->isEmpty())

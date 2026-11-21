@@ -25,6 +25,16 @@
                     @endforeach
                 </select>
             </div>
+
+            <div class="w-40">
+                <label class="block text-xs font-medium text-slate-600 mb-1">Promo</label>
+                <select name="promo" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white">
+                    <option value="">Semua</option>
+                    <option value="with" @selected(request('promo')==='with' )>Dengan Promo</option>
+                    <option value="without" @selected(request('promo')==='without' )>Tanpa Promo</option>
+                </select>
+            </div>
+
             <div class="w-36">
                 <label class="block text-xs font-medium text-slate-600 mb-1">Dari</label>
                 <input type="date" name="from" value="{{ request('from') }}" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
@@ -58,6 +68,7 @@
                         <th class="text-center px-4 py-3 font-medium text-slate-600">Items</th>
                         <th class="text-right px-4 py-3 font-medium text-slate-600">Total</th>
                         <th class="text-left px-4 py-3 font-medium text-slate-600">Metode</th>
+                        <th class="text-left px-4 py-3 font-medium text-slate-600">Promo</th>
                         <th class="text-left px-4 py-3 font-medium text-slate-600">Status</th>
                         <th class="text-right px-4 py-3 font-medium text-slate-600">Aksi</th>
                     </tr>
@@ -71,6 +82,13 @@
                         <td class="px-4 py-3 text-center font-mono text-slate-700">{{ $o->items->count() }}</td>
                         <td class="px-4 py-3 text-right font-mono font-medium text-slate-900">Rp {{ number_format((float) $o->total_amount, 0, ',', '.') }}</td>
                         <td class="px-4 py-3 text-xs text-slate-600">{{ $o->payments->first()?->paymentMethod?->name ?? '—' }}</td>
+                        <td class="px-4 py-3">
+                            @if ($o->promotion)
+                            <x-badge variant="success">{{ $o->promotion->promotion_name }}</x-badge>
+                            @else
+                            <span class="text-xs text-slate-400">—</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3">
                             @php
                             $v = match($o->status) {

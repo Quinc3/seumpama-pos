@@ -12,11 +12,13 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $orders = Order::with(['user', 'items', 'payments.paymentMethod'])
+        $orders = Order::with(['user', 'items', 'promotion', 'payments.paymentMethod'])
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->when($request->from, fn($q, $d) => $q->whereDate('created_at', '>=', $d))
             ->when($request->to, fn($q, $d) => $q->whereDate('created_at', '<=', $d))
             ->when($request->search, fn($q, $s) => $q->where('order_number', 'like', "%{$s}%"))
+            ->when($request->promo === 'with', fn($q) => $q->whereHas('promotion'))
+            ->when($request->promo === 'without', fn($q) => $q->whereDoesntHave('promotion'))
             ->orderByDesc('id')
             ->paginate(25)
             ->withQueryString();
@@ -30,6 +32,7 @@ class OrderController extends Controller
             'items.product',
             'items.recipe',
             'payments.paymentMethod',
+            'promotion',
             'user',
             'businessSession',
         ]);
@@ -39,7 +42,7 @@ class OrderController extends Controller
 
     public function receipt(Order $order)
     {
-        $order->load(['items', 'payments.paymentMethod', 'user']);
+        $order->load(['items', 'payments.paymentMethod', 'promotion', 'user']);
 
         $settings = [
             'shop_name' => BusinessSetting::get('shop_name', 'Seumpama Bunga'),
@@ -53,7 +56,7 @@ class OrderController extends Controller
 
     public function pdf(Order $order)
     {
-        $order->load(['items', 'payments.paymentMethod', 'user']);
+        $order->load(['items', 'payments.paymentMethod', 'promotion', 'user']);
 
         $settings = [
             'shop_name' => BusinessSetting::get('shop_name', 'Seumpama Bunga'),

@@ -117,6 +117,32 @@ class SalesReportController extends Controller
             ->orderByDesc('total_revenue')
             ->get();
 
+        // ============ Promo breakdown ============
+        $promoBreakdown = DB::table('order_promotions as op')
+            ->join('orders as o', 'o.id', '=', 'op.order_id')
+            ->join('business_sessions as bs', 'bs.id', '=', 'o.business_session_id')
+            ->where('o.status', 'paid')
+            ->whereBetween('bs.business_date', [$fromDate, $toDate])
+            ->select(
+                'op.promotion_name',
+                DB::raw('COUNT(DISTINCT o.id) as tx_count'),
+                DB::raw('SUM(op.discount_amount) as total_discount'),
+                DB::raw('SUM(o.total_amount) as total_revenue')
+            )
+            ->groupBy('op.promotion_name')
+            ->orderByDesc('total_discount')
+            ->get();
+
+        $promoStats = [
+            'tx_count' => $promoBreakdown->sum('tx_count'),
+            'total_discount' => (float) $promoBreakdown->sum('total_discount'),
+            'total_revenue' => (float) $promoBreakdown->sum('total_revenue'),
+            'pct_of_transactions' => $totalTransactions > 0
+                ? round(($promoBreakdown->sum('tx_count') / $totalTransactions) * 100, 2)
+                : 0,
+        ];
+
+
         // Recent orders (Query Builder)
         $recentOrders = (clone $base)
             ->select('orders.*')
@@ -155,6 +181,8 @@ class SalesReportController extends Controller
             'byCategory' => $byCategory,
             'byCashier' => $byCashier,
             'recentOrders' => $recentOrders,
+            'promoBreakdown' => $promoBreakdown,
+            'promoStats' => $promoStats,
         ];
     }
 

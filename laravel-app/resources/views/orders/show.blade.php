@@ -99,6 +99,30 @@
         </x-card>
     </div>
 
+    @if ($order->promotion)
+    <div class="mt-4">
+        <x-card title="Promo" subtitle="Promo yang digunakan pada transaksi ini">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-sm font-medium text-slate-900">{{ $order->promotion->promotion_name }}</div>
+                    <div class="text-xs text-slate-500 mt-0.5">
+                        @if ($order->promotion->discount_type === 'percentage')
+                        Diskon {{ number_format((float) $order->promotion->discount_value, 2) }}%
+                        @else
+                        Diskon fixed
+                        @endif
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="font-mono text-sm font-bold text-green-700">
+                        - Rp {{ number_format((float) $order->promotion->discount_amount, 0, ',', '.') }}
+                    </div>
+                </div>
+            </div>
+        </x-card>
+    </div>
+    @endif
+
     {{-- Payments --}}
     <div class="mt-4">
         <x-card title="Pembayaran">
@@ -119,9 +143,21 @@
             </div>
             @endforeach
 
-            <div class="mt-3 pt-3 border-t-2 border-slate-200 flex justify-between items-center">
-                <span class="text-base font-semibold text-slate-900">Total</span>
-                <span class="text-xl font-bold text-slate-900 font-mono">Rp {{ number_format((float) $order->total_amount, 0, ',', '.') }}</span>
+            <div class="mt-3 pt-3 border-t-2 border-slate-200 space-y-1">
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-600">Subtotal</span>
+                    <span class="font-mono text-slate-900">Rp {{ number_format((float) $order->subtotal, 0, ',', '.') }}</span>
+                </div>
+                @if ((float) $order->discount_amount > 0)
+                <div class="flex justify-between text-sm text-green-700">
+                    <span>Diskon{{ $order->promotion ? ' (' . $order->promotion->promotion_name . ')' : '' }}</span>
+                    <span class="font-mono font-medium">- Rp {{ number_format((float) $order->discount_amount, 0, ',', '.') }}</span>
+                </div>
+                @endif
+                <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                    <span class="text-base font-semibold text-slate-900">Total</span>
+                    <span class="text-xl font-bold text-slate-900 font-mono">Rp {{ number_format((float) $order->total_amount, 0, ',', '.') }}</span>
+                </div>
             </div>
         </x-card>
     </div>
