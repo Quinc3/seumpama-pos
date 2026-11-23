@@ -91,11 +91,21 @@ class PosController extends Controller
         $cart = $this->resolveCart($session);
 
         $qty = (float) ($data['quantity'] ?? 1);
-        $item = CartItem::where('cart_id', $cart->id)->where('product_id', $product->id)->first();
+
+        $item = CartItem::where('cart_id', $cart->id)
+            ->where('product_id', $product->id)
+            ->whereNull('notes')
+            ->first();
+
         if ($item) {
             $item->increment('quantity', $qty);
         } else {
-            CartItem::create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => $qty]);
+            CartItem::create([
+                'cart_id' => $cart->id,
+                'product_id' => $product->id,
+                'quantity' => $qty,
+                'notes' => null,
+            ]);
         }
 
         $cart = Cart::with('items.product')->findOrFail($cart->id);
@@ -114,6 +124,21 @@ class PosController extends Controller
         $cartItem->update(['quantity' => $data['quantity']]);
 
         $cart = Cart::with('items.product')->findOrFail($cartItem->cart_id);
+
+        return response()->json(['success' => true, 'cart' => $cart->toCartArray()]);
+    }
+
+    public function updateItemNotes(Request $request, CartItem $cartItem)
+    {
+        $this->authorizeCartItem($cartItem);
+
+        $data = $request->validate([
+            'notes' => ['nullable', 'string', 'max:150'],
+        ]);
+
+        $cartItem->update(['notes' => $data['notes'] ?: null]);
+
+        $cart = $cartItem->cart->load('items.product');
 
         return response()->json(['success' => true, 'cart' => $cart->toCartArray()]);
     }

@@ -149,6 +149,13 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="text-sm font-medium text-slate-900 leading-tight" x-text="item.name"></div>
                                     <div class="text-xs text-slate-500 font-mono mt-0.5" x-text="'Rp ' + fmt(item.unit_price)"></div>
+
+                                    {{-- Notes display --}}
+                                    <template x-if="item.notes">
+                                        <div class="mt-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded italic">
+                                            <span x-text="item.notes"></span>
+                                        </div>
+                                    </template>
                                 </div>
                                 <button type="button" @click="removeItem(item.id)"
                                     class="text-slate-400 hover:text-red-600 shrink-0">
@@ -177,7 +184,13 @@
                                         </svg>
                                     </button>
                                 </div>
-                                <div class="text-sm font-bold text-slate-900 font-mono" x-text="'Rp ' + fmt(item.subtotal)"></div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @click="openNotesModal(item)"
+                                        class="text-xs px-2 py-1 rounded text-blue-600 hover:bg-blue-50 font-medium">
+                                        Notes
+                                    </button>
+                                    <div class="text-sm font-bold text-slate-900 font-mono" x-text="'Rp ' + fmt(item.subtotal)"></div>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -198,6 +211,60 @@
                 </button>
             </div>
         </aside>
+    </div>
+
+    {{-- Notes Modal --}}
+    <div x-show="notesOpen" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style="display: none;">
+        <div class="absolute inset-0 bg-slate-900/50" @click="notesOpen = false"></div>
+
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+            @click.stop>
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="text-base font-bold text-slate-900">
+                    Notes — <span x-text="notesItem?.name" class="text-sm font-normal text-slate-600"></span>
+                </h3>
+                <button @click="notesOpen = false" class="text-slate-400 hover:text-slate-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                        Catatan untuk item ini
+                        <span class="text-xs text-slate-400">(maks 150 karakter)</span>
+                    </label>
+                    <textarea x-model="notesText" rows="3" maxlength="150"
+                        placeholder="Contoh: less sugar, extra shot, no ice, oat milk..."
+                        class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    <p class="text-xs text-slate-400 mt-1">
+                        <span x-text="notesText.length"></span>/150
+                    </p>
+                </div>
+                <div class="text-xs text-slate-500 bg-amber-50 border border-amber-200 p-2 rounded">
+                    <strong>Info:</strong> Notes hanya untuk barista (less sugar, extra shot, dll).
+                    Konsumsi stok bahan tetap dihitung sesuai resep standar.
+                </div>
+            </div>
+
+            <div class="px-5 py-4 border-t border-slate-200 flex gap-2">
+                <button type="button" @click="notesOpen = false"
+                    class="flex-1 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50">
+                    Batal
+                </button>
+                <button type="button" @click="saveNotes()"
+                    :disabled="savingNotes"
+                    class="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:bg-slate-300">
+                    <span x-show="!savingNotes">Simpan Notes</span>
+                    <span x-show="savingNotes">Menyimpan...</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     {{-- Checkout Modal --}}
@@ -369,6 +436,10 @@
                 checkoutError: null,
                 paymentMethodId: paymentMethods.length > 0 ? paymentMethods[0].id : null,
                 selectedPromotionId: null,
+                notesOpen: false,
+                notesItem: null,
+                notesText: '',
+                savingNotes: false,
                 amountPaid: '',
                 paymentReference: '',
                 orderNotes: '',
@@ -530,6 +601,33 @@
                         this.error = e.message;
                     } finally {
                         this.loading = false;
+                    }
+                },
+
+                openNotesModal(item) {
+                    this.notesItem = item;
+                    this.notesText = item.notes || '';
+                    this.notesOpen = true;
+                },
+
+                async saveNotes() {
+                    if (!this.notesItem) return;
+                    this.savingNotes = true;
+                    try {
+                        const data = await this.request(`/pos/cart/items/${this.notesItem.id}/notes`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({
+                                notes: this.notesText.trim() || null
+                            }),
+                        });
+                        this.cart = data.cart;
+                        this.notesOpen = false;
+                        this.notesItem = null;
+                        this.notesText = '';
+                    } catch (e) {
+                        this.error = e.message;
+                    } finally {
+                        this.savingNotes = false;
                     }
                 },
 

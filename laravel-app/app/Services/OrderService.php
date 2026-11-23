@@ -165,6 +165,7 @@ class OrderService
                     'unit_price' => $p['unit_price'],
                     'discount_amount' => 0,
                     'subtotal' => $p['subtotal'],
+                    'notes' => $p['cart_item']->notes ?? null,
                 ]);
 
                 // Snapshot ingredient usage + stock deduction

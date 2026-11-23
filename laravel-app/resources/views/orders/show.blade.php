@@ -87,6 +87,11 @@
                             <td class="px-3 py-2">
                                 <div class="font-medium text-slate-900">{{ $item->product_name }}</div>
                                 <div class="text-xs text-slate-400 font-mono">{{ $item->product?->sku }}</div>
+                                @if ($item->notes)
+                                <div class="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded italic mt-1 inline-block">
+                                    {{ $item->notes }}
+                                </div>
+                                @endif
                             </td>
                             <td class="px-3 py-2 text-right font-mono text-slate-900">{{ number_format((float) $item->quantity, 2) }}</td>
                             <td class="px-3 py-2 text-right font-mono text-slate-700">Rp {{ number_format((float) $item->unit_price, 0, ',', '.') }}</td>

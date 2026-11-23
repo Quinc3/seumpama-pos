@@ -138,6 +138,11 @@
             <span>{{ number_format((float) $item->quantity, 0) }} x Rp {{ number_format((float) $item->unit_price, 0, ',', '.') }}</span>
             <span>Rp {{ number_format((float) $item->subtotal, 0, ',', '.') }}</span>
         </div>
+        @if ($item->notes)
+        <div style="font-size: 10px; padding-left: 6px; font-style: italic;">
+            * {{ $item->notes }}
+        </div>
+        @endif
         @endforeach
     </div>
 

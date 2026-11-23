@@ -260,6 +260,9 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('pos/cart/items/{cartItem}', [\App\Http\Controllers\PosController::class, 'updateItem'])
             ->whereNumber('cartItem')
             ->name('pos.cart.items.update');
+        Route::patch('pos/cart/items/{cartItem}/notes', [\App\Http\Controllers\PosController::class, 'updateItemNotes'])
+            ->whereNumber('cartItem')
+            ->name('pos.cart.items.notes');
         Route::delete('pos/cart/items/{cartItem}', [\App\Http\Controllers\PosController::class, 'removeItem'])
             ->whereNumber('cartItem')
             ->name('pos.cart.items.destroy');
@@ -268,7 +271,6 @@ Route::middleware(['auth'])->group(function () {
 
         // ============ POS (tambahan checkout) ============
         Route::middleware('permission:pos.access')->group(function () {
-            // ... route POS yang sudah ada
 
             Route::post('pos/checkout', [\App\Http\Controllers\PosController::class, 'checkout'])
                 ->name('pos.checkout');
