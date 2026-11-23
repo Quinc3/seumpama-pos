@@ -29,6 +29,13 @@ env/
 *.joblib
 ann-artifacts/
 
+
+# SQL dumps / backups (jangan commit)
+*.sql
+*.sql.gz
+backup*
+dump*
+
 # OS
 .DS_Store
 Thumbs.db
